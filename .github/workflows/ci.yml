@@ -12,3 +12,5 @@ jobs:
           node-version: '22'
       - run: npm run check
       - run: npm test
+      - name: Print registered Agent Card SHA-256
+        run: sha256sum public/.well-known/agent-card.json
