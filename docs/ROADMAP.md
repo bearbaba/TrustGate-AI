@@ -12,9 +12,9 @@
 - [x] Built owner-only guarded transaction-signing page with wallet/network/card/parameter checks
 
 ## Required verification and improvements
-- [ ] Capture official `/v1/check-badge/JyP9UhV91L3jWGjHH4aB7` output; require all 3 flags true, issues empty
-- [ ] Confirm metadata URI and hash also shown in the Agent Registry detail UI
-- [ ] Test public Decision Lab against the *live* registered badge; distinguish resolver behavior from mocked fixture tests
+- [x] Captured official `/v1/check-badge/JyP9UhV91L3jWGjHH4aB7` output: `badge_valid: true`, `checks.extension_conformant: true`, `checks.verification_present: true`, `checks.hash_matches_on_chain: true`, `issues: []`
+- [x] Confirmed Agent #1323 metadata URL in the official registry and its hash in the verifier response
+- [ ] Independently smoke-test deployed Decision Lab against live Agent #1323 (fixture-based regression checks added; runtime response still requires verification)
 - [ ] Implement concrete identity-bound service policy demo and show its actual security boundary
 - [ ] Implement meaningful end-to-end x402 test payment only if safely feasible; otherwise disclose it as planned, not shipped
 - [ ] Add durable, tamper-evident server-side audit and replay/idempotency safeguards if enabling real money flows

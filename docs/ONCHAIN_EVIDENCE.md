@@ -23,14 +23,25 @@ TrustGate AI is linked to an active CIS-8004 native agent on Concordium Testnet.
 
 The successful event includes the URI above and the SHA-256 above. This is on-chain metadata evidence, **not** proof of live payment execution or autonomous agent transaction settlement.
 
-## Verification still required
-Check the registry's badge verifier:
+## Official badge verification completed — 2026-11-20
+
+The agent owner queried the official registry endpoint after the finalized transaction:
 
 ```sh
 curl -fsS 'https://agent-registry-mcp.concordium.com/v1/check-badge/JyP9UhV91L3jWGjHH4aB7'
 ```
 
-Only mark full card verification complete if the response reports `badge_valid: true`, `extension_conformant: true`, `verification_present: true` and `issues: []`. The final verification response has not been captured in this repository yet.
+Its response reported:
+
+- `badge_valid: true`, `issues: []`
+- `checks.extension_conformant: true`, `checks.verification_present: true`
+- `checks.hash_matches_on_chain: true`, `checks.owner_matches: true`
+- `checks.status_active: true`, `checks.verify_url_matches: true`
+- `http_status: 200`, `network: "testnet"`
+- On-chain status `Active`, Agent Card URL matching the published URL
+- `card_sha256` equal to `on_chain.metadata_hash_hex`: `ed33956577d378ef0bfd537505863d846a2c130513302a2d45d99e5bfc009c44`
+
+**Result:** Concordium Agent #1323's badge and metadata integrity are verified. This confirmation was supplied as the unmodified CLI output by the owner, then used to build a regression fixture. Full badge confirmation does not mean payment execution is integrated.
 
 ## Protect the card hash
 The card bytes are already pinned on-chain. Editing the hosted `public/.well-known/agent-card.json` changes its SHA-256 and breaks the integrity match until another `setAgentURI` update. Keep the current file unchanged when editing README, docs, UI, and other files.

@@ -125,9 +125,19 @@ async function preflight() {
     getSigningParameter();
     updateStage('parameters', 'pass', 'Matches official setAgentURI payload');
 
+    // An already verified Agent Card must not trigger a redundant on-chain update.
+    const verificationResponse = await fetch('/api/verify?badge=' + encodeURIComponent(AGENT.badge), {cache:'no-store'});
+    if (!verificationResponse.ok) throw new Error('Cannot confirm current registry state (HTTP ' + verificationResponse.status + ').');
+    const verification = await verificationResponse.json();
+    if (verification.ok === true) {
+      disableSigning();
+      $('result').textContent = JSON.stringify(verification, null, 2);
+      setStatus('Agent #1323 is already fully verified on-chain. No further signature or network fee is needed.', 'good');
+      return;
+    }
     ready = true;
     $('sign').disabled = false;
-    setStatus('All checks passed. Review the fixed transaction details, then approve the request in your wallet.', 'good');
+    setStatus('Checks passed. On-chain badge is not fully verified yet; review the transaction before signing.', 'good');
   } catch (error) {
     disableSigning();
     renderError('Preflight blocked', error);
@@ -145,6 +155,15 @@ async function sign() {
     assertAccount(current);
     await assertChain(provider);
     await verifyCard();
+    // Check again immediately before a wallet prompt, so refreshes cannot
+    // accidentally sign the same finalized update twice.
+    const verificationResponse = await fetch('/api/verify?badge=' + encodeURIComponent(AGENT.badge), {cache:'no-store'});
+    if (!verificationResponse.ok) throw new Error('Registry state cannot be checked; signing is blocked.');
+    const verification = await verificationResponse.json();
+    if (verification.ok === true) {
+      setStatus('Agent #1323 is already verified. Duplicate signing is disabled.', 'good');
+      return;
+    }
     const { schema } = getSigningParameter();
     const hash = await provider.sendTransaction(
       AGENT.owner,
