@@ -5,6 +5,7 @@
 - Live demo: https://trustgate-ai.vercel.app/
 - **Live signed evidence flow:** https://trustgate-ai.vercel.app/live-proof
 - **Adversarial Security Lab:** https://trustgate-ai.vercel.app/security-lab
+- **x402 Testnet Gateway (locked until configured):** https://trustgate-ai.vercel.app/x402-gateway
 - Agent #1323 metadata management: https://trustgate-ai.vercel.app/sign-agent
 - Source: https://github.com/bearbaba/TrustGate-AI
 - **On-chain proof:** [Successful Testnet setAgentURI transaction](https://ccdexplorer.io/testnet/transaction/93280aa5361967fc656e513e824c495c932c2abdc4cd7253bf3f2db35d90f4ee)
@@ -35,6 +36,14 @@ For REVIEW and BLOCK, the wallet and badge are still verified before returning t
 **Reproducible policy evidence:** The [Policy Witness specification](docs/POLICY_WITNESS.md) explains why a hash alone does not stop forged JSON, how verifier policy re-execution works, and what the [Attack Lab](https://trustgate-ai.vercel.app/security-lab) can demonstrate. Even with a valid witness, a backend-signed historical decision and durable nonce protection are NOT implemented.
 
 The authenticated service is deliberately **public/read-only**. It demonstrates a genuine wallet-ownership proof, fresh badge resolution and policy-gated evidence delivery, but does not claim a paid integration.
+
+## x402 Testnet gateway (v0.7 — disabled until configured)
+
+The x402 gateway now contains a **source-level testnet resource endpoint**, using the official `@x402/core` and `@x402/concordium` sponsored-transaction server scheme. It checks a separate owner-signed exact-chain, exact-merchant, exact-price intent; verifies Agent #1323; issues an official HTTP 402 challenge only after a real facilitator /supported handshake; verifies a sponsored payment payload; and requires atomic shared replay locks before settlement.
+
+**The live environment is not yet configured for merchant payments, and NO actual x402 payment has been demonstrated.** A second merchant Testnet wallet, a compatible sponsor/facilitator and shared durable Redis are required. The public page deliberately shows a LOCKED gateway until those are set. A wallet `signMessage` is not a payment signature; client-side sponsored transaction signing is also still to be built.
+
+Read [the gateway setup and safety checklist](docs/X402_GATEWAY_SETUP.md). Do not fund or deploy mainnet. Never put private keys in this repo.
 
 ## Production path: real x402 settlement
 
@@ -70,6 +79,7 @@ npm run check
 
 ## API
 
+- `GET /api/x402/status` reports readiness without disclosing secrets; `GET /api/x402/quote` builds official x402 Testnet requirements when configured; `GET /api/x402/resource` protects a paid evidence endpoint and returns HTTP 402 or a settled resource only behind all configured safety gates. **No live payment has been confirmed**.
 - `GET /api/verify?badge=BASE58TOKEN` checks a badge with Concordium's server-side resolver. Verification fails closed if a mandatory check is absent or registry is unavailable.
 - `POST /api/live-proof` accepts signed, time-bounded Testnet requests for Agent #1323 and returns a public evidence receipt only after signature, badge and policy checks.
 - `POST /api/verify-receipt` checks v0.5 receipt SHA-256, **recomputed policy witness**, owner-signed request and the current badge. v0.4 legacy receipts can verify owner signature and current badge without policy witness. This is not a server-signed historical timestamp or authorization token.

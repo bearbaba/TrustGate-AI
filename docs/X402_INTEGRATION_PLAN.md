@@ -1,6 +1,6 @@
 # TrustGate AI — Real Concordium x402 Integration Plan
 
-**Status: NOT IMPLEMENTED.** This is an engineering checklist, not proof of an x402 transaction.
+**Status: Server-side config-gated gateway implemented in v0.7; no merchant, sponsor or durable store configured on Production, no real x402 transaction executed.** This checklist defines actual completion, not a simulated payment.
 
 ## Why x402 matters
 

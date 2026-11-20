@@ -23,7 +23,9 @@
 - [x] v0.5 Policy Witness receipt confirmed on Production: all 6 checks true at 2026-11-20T11:47:33.331Z
 - [x] Owner-confirmed Attack Lab: authentic receipt ACCEPTED and policy/signature/metadata forgeries REJECTED at their expected layer (4/4)
 - [x] Implement identity-bound *read-only public* service policy demo and document replay/financial security boundaries
-- [ ] Implement meaningful end-to-end x402 test payment only if safely feasible; otherwise disclose it as planned, not shipped
+- [x] Implemented config-gated x402 Testnet resource, real SDK scheme, signed-intent checks and shared Redis replay reservation (source-level, no real payment executed)
+- [ ] Configure merchant, genuine Testnet sponsor/facilitator and durable Redis; then build paying client and independently verify one real settlement
+- [ ] Implement meaningful end-to-end x402 Testnet payment and recipient proof; until then explicitly disclose as NOT SHIPPED
 - [x] Added independent open-source offline/live receipt verifier with explicit signature and registry trust boundaries (verify with fresh CLI run before marking live pass)
 - [ ] Add server-signed receipt issuance (production signing key must be managed securely outside GitHub)
 - [ ] Add durable audit, replay/idempotency protection, rate limits and server-side persistent challenge store **before** enabling paid or write-sensitive flows
