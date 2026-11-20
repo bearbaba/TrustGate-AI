@@ -73,14 +73,34 @@ On 2026-11-20, the owner submitted a fresh v0.5 Live Proof receipt to the Produc
 - `verifiedAt: 2026-11-20T11:47:33.331Z`
 - `registryCheckedAt: 2026-11-20T11:47:33.011Z`
 
-This **owner-observed Production result** validates the v0.5 Policy Witness, signed request and current on-chain Agent #1323 checks end-to-end. The response explicitly does **not** certify historical server issuance, immutable history, durable replay prevention or payment. The separate Attack Lab mutation scenarios and $6/$12 policy paths still require owner-observed Production results.
+This **owner-observed Production result** validates the v0.5 Policy Witness, signed request and current on-chain Agent #1323 checks end-to-end. The response explicitly does **not** certify historical server issuance, immutable history, durable replay prevention or payment. The separate $6/$12 policy paths still require owner-observed Production results. All four Attack Lab scenarios were subsequently confirmed on Production.
+
+## v0.5 Adversarial Security Lab — 4/4 owner-observed Production tests
+
+**Date:** 2026-11-20 (UTC)  
+**App:** https://trustgate-ai.vercel.app/security-lab  
+**Sample file:** `trustgate-live-proof-321ede3b-a294-425d-973f-04f97f9e693c.json`  
+**Receipt digest shown in the lab:** `53db3cebc1a2657930e429b7912539c20dedc66a9b33e66cec5bb6bacd506a50`
+
+The owner used one freshly signed v0.5 Live Proof receipt to run all four security scenarios on the Production website. These are user-provided observations of the actual hosted API responses, **not independently collected server logs**.
+
+| Scenario | Expected API code | Observed API code | Result |
+|---|---|---|---|
+| 00 · Original receipt | `SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED` | `SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED` | ACCEPTED (expected) |
+| 01 · Forge policy decision, recompute SHA-256 | `POLICY_WITNESS_MISMATCH` | `POLICY_WITNESS_MISMATCH` | REJECTED (expected) |
+| 02 · Swap wallet signature, recompute SHA-256 | `INVALID_OWNER_SIGNATURE` | `INVALID_OWNER_SIGNATURE` | REJECTED (expected) |
+| 03 · Replace anchored card hash, recompute SHA-256 | `CURRENT_CARD_MISMATCH` | `CURRENT_CARD_MISMATCH` | REJECTED (expected) |
+
+**Conclusion:** The published v0.5 validator correctly accepted the unchanged receipt and rejected the three supplied tampering scenarios at their expected checkpoints, despite re-hashing the forged receipt. This is reproducible adversarial test evidence, not a formal security audit or proof that every attack is prevented.
+
+**Still unverified:** REVIEW ($6.00) and BLOCK ($12.00) have not yet been witnessed on Production with the owner wallet. Durable nonce consumption, signed server-issued timestamps, merchant settlement and paid x402 resource delivery are not implemented. The artifact itself does not grant or spend any funds.
 
 ## Testing checklist
 
 - [x] v0.3 ALLOW completed with owner wallet on Production, receipt returned
 - [x] v0.4 ALLOW completed with owner wallet; download and independently verify JSON (all 5 checks true, 2026-11-20)
 - [x] v0.5 Policy Witness Production receipt verification passed all 6 checks at 2026-11-20T11:47:33.331Z
-- [ ] v0.5 Attack Lab original and tampered receipt scenarios confirmed with owner wallet
+- [x] v0.5 Attack Lab original + three tampered receipts confirmed on Production; all 4 results matched expected codes
 - [ ] v0.4/v0.5 REVIEW ($6) completed with owner wallet and no receipt issued
 - [ ] v0.4/v0.5 BLOCK ($12) completed with owner wallet and no receipt issued
 

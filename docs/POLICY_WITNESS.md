@@ -30,4 +30,4 @@ A third party can run the [Adversarial Lab](https://trustgate-ai.vercel.app/secu
 
 On 2026-11-20, Agent #1323 completed a live v0.4 owner-signed Testnet request and verified all five then-current receipt checks. See [Live Proof Evidence](LIVE_PROOF_EVIDENCE.md).
 
-The new policy witness and Adversarial Lab are release features to be validated separately on Production. Neither is described as having passed an owner-wallet production test until that test is actually performed.
+The owner subsequently confirmed v0.5 Policy Witness verification (all six checks true) and the four Production Adversarial Lab scenarios (original accepted, three distinct forgeries rejected at their expected layers). See [Live Proof Evidence](LIVE_PROOF_EVIDENCE.md). These results are owner-observed test cases, not an independent security audit.

@@ -40,7 +40,7 @@ The authenticated service is deliberately **public/read-only**. It demonstrates 
 
 A genuine Concordium x402 flow has **not** been implemented. The official `@x402/concordium` package supports client, server and facilitator components; however, TrustGate cannot claim agent payments or payment authorization without an actual Testnet settlement to a separate receiving account and a verifiable transaction receipt. The [x402 integration checklist](docs/X402_INTEGRATION_PLAN.md) records the necessary steps and strict acceptance criteria.
 
-**Owner-confirmed live test:** A fresh v0.5 Policy Witness receipt was verified on Production on 2026-11-20 at `11:47:33Z`: `SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED`, with all six checks true (integrity, request binding, policy, owner signature, registry and Agent Card). See [Live Proof evidence](docs/LIVE_PROOF_EVIDENCE.md). The adversarial mutation scenarios are not yet owner-confirmed on Production.
+**Owner-confirmed live test:** A fresh v0.5 Policy Witness receipt was verified on Production on 2026-11-20 at `11:47:33Z`: `SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED`, with all six checks true (integrity, request binding, policy, owner signature, registry and Agent Card). See [Live Proof evidence](docs/LIVE_PROOF_EVIDENCE.md). The Production Attack Lab was subsequently owner-tested: original receipt ACCEPTED and forged policy, signature, and metadata each REJECTED with the expected codes (4/4). See [Live Proof evidence](docs/LIVE_PROOF_EVIDENCE.md).
 
 ## Start locally
 
