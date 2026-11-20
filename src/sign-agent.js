@@ -1,164 +1,198 @@
 import { detectConcordiumProvider } from '@concordium/browser-wallet-api-helpers';
-import {
-  AccountTransactionType,
-  CcdAmount,
-  ContractAddress,
-  ContractName,
-  ConcordiumGRPCClient,
-  EntrypointName,
-  Parameter,
-  serializeUpdateContractParameters,
-} from '@concordium/web-sdk';
+import { AccountTransactionType, CcdAmount } from '@concordium/web-sdk';
+import { AGENT, PARAMETER_JSON, getSigningParameter } from './agent-signer-params.js';
 
-const OWNER = '34C1ozW8edKtBmA8FUFoR4aBys8ofuwtRmYqqbzNVPAsATT4wk';
-const BADGE = 'JyP9UhV91L3jWGjHH4aB7';
-const CARD_URL = 'https://trustgate-ai.vercel.app/.well-known/agent-card.json';
-const GENESIS_PREFIX = '4221332d34e1694168c2a0c0b3fd0f27';
-const METADATA_SHA256 = 'ed33956577d378ef0bfd537505863d846a2c130513302a2d45d99e5bfc009c44';
-const PARAMETER_HEX = '082b05000000000000013b00000068747470733a2f2f7472757374676174652d61692e76657263656c2e6170702f2e77656c6c2d6b6e6f776e2f6167656e742d636172642e6a736f6e01ed33956577d378ef0bfd537505863d846a2c130513302a2d45d99e5bfc009c44';
-const PARAMETER_JSON = {
-  token_id: '2b05000000000000',
-  agent_uri: { Some: [CARD_URL] },
-  metadata_hash: { Some: [[237,51,149,101,119,211,120,239,11,253,83,117,5,134,61,132,106,44,19,5,19,48,42,45,69,217,158,91,252,0,156,68]] },
-};
-let provider;
-let selectedAccount;
-let moduleSchema;
-let verified = false;
-let submitting = false;
+const $ = id => document.getElementById(id);
+let provider = null;
+let approvedAccount = null;
+let ready = false;
+let busy = false;
+let preflightStage = 'wallet';
 
-const id = (n) => document.getElementById(n);
-const status = (message, kind = '') => {
-  id('status').textContent = message;
-  id('status').className = 'status ' + kind;
+const stageNames = {
+  wallet: 'Wallet connection',
+  network: 'Account and network',
+  card: 'Agent Card integrity',
+  parameters: 'Transaction encoding',
+  final: 'Final wallet confirmation'
 };
-const hex = (bytes) => [...new Uint8Array(bytes)].map(x => x.toString(16).padStart(2, '0')).join('');
-const toBase64 = (bytes) => {
-  const data = new Uint8Array(bytes);
-  let str = '';
-  for (let i = 0; i < data.length; i += 4096) {
-    str += String.fromCharCode(...data.subarray(i, i + 4096));
+const stages = ['wallet', 'network', 'card', 'parameters'];
+const copyableError = err => {
+  const value = err?.message && String(err.message).trim() !== 'Error' ? String(err.message) :
+    (typeof err === 'string' && err.trim() !== 'Error' ? err : '');
+  return value || 'The wallet or RPC service returned an unspecified error. Check the wallet popup and browser console.';
+};
+function setStatus(message, type = '') {
+  $('status').textContent = message;
+  $('status').className = 'status ' + type;
+}
+function updateStage(step, state, detail = '') {
+  const item = $('stage-' + step);
+  if (!item) return;
+  item.dataset.state = state;
+  const label = item.querySelector('small');
+  if (label) label.textContent = detail || ({idle:'Not started',active:'Checking…',pass:'Passed',fail:'Failed'})[state];
+}
+function setStage(step, message) {
+  preflightStage = step;
+  updateStage(step, 'active');
+  setStatus(message);
+}
+function disableSigning() {
+  ready = false;
+  $('sign').disabled = true;
+}
+function renderError(prefix, err) {
+  const cause = copyableError(err);
+  const where = stageNames[preflightStage] || preflightStage;
+  setStatus(prefix + ' — ' + where + ': ' + cause, 'bad');
+  updateStage(preflightStage, 'fail', 'Failed — see message below');
+  console.error('[TrustGate preflight] ' + preflightStage, err);
+}
+function hex(buffer) {
+  return Array.from(new Uint8Array(buffer), b => b.toString(16).padStart(2, '0')).join('');
+}
+function base64(bytes) {
+  const value = new Uint8Array(bytes);
+  let result = '';
+  for (let offset = 0; offset < value.length; offset += 4096) {
+    result += String.fromCharCode(...value.slice(offset, offset + 4096));
   }
-  return btoa(str);
-};
-const toPlain = (x) => {
-  if (!x) return '';
-  return typeof x === 'string' ? x : String(x?.value ?? x);
-};
-const lock = () => { verified = false; id('sign').disabled = true; };
-
+  return btoa(result);
+}
+function assertAccount(account) {
+  if (account !== AGENT.owner) throw new Error('Wrong wallet account. Switch to the owner ending in ATT4wk.');
+}
+async function assertChain(wallet) {
+  const chain = await wallet.getSelectedChain();
+  if (typeof chain !== 'string' || !chain.toLowerCase().startsWith(AGENT.genesisPrefix)) {
+    throw new Error('Concordium Testnet is required. Change your network in Wallet Settings.');
+  }
+}
 async function verifyCard() {
-  const response = await fetch(CARD_URL, { cache: 'no-store' });
-  if (!response.ok) throw Error('Không thể tải Agent Card từ Vercel.');
-  const bytes = await response.arrayBuffer();
-  const hash = hex(await crypto.subtle.digest('SHA-256', bytes));
-  if (hash !== METADATA_SHA256) throw Error('Agent Card đã thay đổi; hash không còn khớp. Không được ký.');
-  const card = JSON.parse(new TextDecoder().decode(bytes));
-  const hasBadge = card?.capabilities?.extensions?.some(
-    x => x.uri === 'https://docs.concordium.com/a2a-extensions/concordium-badge/v1'
-      && x.params?.tokenAddress?.endsWith('/cis-2:' + BADGE));
-  if (!hasBadge) throw Error('Agent Card thiếu badge #1323; không thể ký.');
-  return hash;
+  const response = await fetch(AGENT.cardUrl, { cache: 'no-store' });
+  if (!response.ok) throw new Error('Agent Card is unavailable (HTTP ' + response.status + ').');
+  const raw = await response.arrayBuffer();
+  const digest = hex(await crypto.subtle.digest('SHA-256', raw));
+  if (digest !== AGENT.cardHash) {
+    throw new Error('Hosted Agent Card SHA-256 no longer matches the approved hash. Signing is disabled.');
+  }
+  const document = JSON.parse(new TextDecoder().decode(raw));
+  const badgeOkay = document?.capabilities?.extensions?.some(
+    entry => entry.uri === 'https://docs.concordium.com/a2a-extensions/concordium-badge/v1' &&
+      entry.params?.tokenAddress?.endsWith('/cis-2:' + AGENT.badge)
+  );
+  const registrationOkay = document?.registrations?.some(
+    entry => entry.agentId === AGENT.tokenId &&
+      entry.agentRegistry === 'ccd:' + AGENT.genesisPrefix + ':' + AGENT.contractIndex + '.0'
+  );
+  if (!badgeOkay || !registrationOkay) throw new Error('Agent Card is missing the approved Concordium badge or registration.');
+  return digest;
 }
-
+function watchWallet(wallet) {
+  if (wallet.__trustgateWatched) return;
+  wallet.__trustgateWatched = true;
+  const disconnected = () => { disableSigning(); setStatus('Wallet disconnected. Run the preflight checks again.', 'bad'); };
+  const changed = () => { disableSigning(); setStatus('Wallet account or network changed. Run the preflight checks again.', 'bad'); };
+  wallet.on?.('accountDisconnected', disconnected);
+  wallet.on?.('accountChanged', changed);
+  wallet.on?.('chainChanged', changed);
+}
 async function preflight() {
-  lock();
-  id('check').disabled = true;
-  status('Đang xác minh ví, mạng Testnet, Agent Card và tham số giao dịch...');
+  if (busy) return;
+  busy = true; disableSigning(); $('check').disabled = true;
+  for (const step of stages) updateStage(step, 'idle');
   try {
-    provider = await detectConcordiumProvider();
+    setStage('wallet', 'Connecting to Concordium Wallet…');
+    provider = await detectConcordiumProvider(3000);
+    if (!provider?.connect) throw new Error('Concordium Wallet for Web is not installed or available in this tab.');
     const account = await provider.connect();
-    if (account !== OWNER) throw Error('Sai ví chủ sở hữu. Hãy chọn ví 34C1ozW8ed…ATT4wk.');
-    selectedAccount = account;
-    const chain = await provider.getSelectedChain();
-    if (typeof chain !== 'string' || !chain.toLowerCase().startsWith(GENESIS_PREFIX))
-      throw Error('Ví không ở Concordium Testnet. Hãy đổi mạng trước khi tiếp tục.');
-    id('account').textContent = account;
-    await verifyCard();
+    assertAccount(account);
+    approvedAccount = account;
+    $('account').textContent = account;
+    watchWallet(provider);
+    updateStage('wallet', 'pass');
 
-    const grpc = new ConcordiumGRPCClient(provider.grpcTransport);
-    const contract = ContractAddress.create(12802n, 0n);
-    const info = await grpc.getInstanceInfo(contract);
-    const contractName = ContractName.fromInitName(info.name);
-    if (ContractName.toString(contractName) !== 'CIS-8004')
-      throw Error('Tên contract on-chain không khớp: ' + ContractName.toString(contractName));
-    const moduleRef = info?.sourceModule?.moduleRef || info?.sourceModule;
-    if (!moduleRef) throw Error('Không lấy được module reference của contract.');
-    moduleSchema = await grpc.getEmbeddedSchema(moduleRef);
-    if (!moduleSchema) throw Error('Contract không trả về embedded schema; không thể ký an toàn.');
-    const bytes = serializeUpdateContractParameters(
-      contractName,
-      EntrypointName.fromString('setAgentURI'),
-      PARAMETER_JSON,
-      moduleSchema
-    );
-    if (Parameter.toHexString(bytes).toLowerCase() !== PARAMETER_HEX)
-      throw Error('Parameter bytes từ schema on-chain KHÔNG khớp builder. Giao dịch bị khóa.');
-    const connected = await provider.getMostRecentlySelectedAccount();
-    if (connected !== OWNER) throw Error('Ví đang kết nối không đúng chủ sở hữu Agent.');
-    verified = true;
-    id('sign').disabled = false;
-    status('Đã xác minh xong. Có thể mở Concordium Wallet để ký setAgentURI của Agent #1323.', 'good');
+    setStage('network', 'Checking that the wallet uses Concordium Testnet…');
+    await assertChain(provider);
+    updateStage('network', 'pass');
+
+    setStage('card', 'Verifying the current hosted Agent Card bytes…');
+    await verifyCard();
+    updateStage('card', 'pass', 'SHA-256 and Agent #1323 matched');
+
+    setStage('parameters', 'Re-encoding the contract call and comparing it with the official builder…');
+    getSigningParameter();
+    updateStage('parameters', 'pass', 'Matches official setAgentURI payload');
+
+    ready = true;
+    $('sign').disabled = false;
+    setStatus('All checks passed. Review the fixed transaction details, then approve the request in your wallet.', 'good');
   } catch (error) {
-    status('Không thể mở khóa ký: ' + (error?.message || String(error)), 'bad');
+    disableSigning();
+    renderError('Preflight blocked', error);
   } finally {
-    id('check').disabled = false;
+    busy = false; $('check').disabled = false;
   }
 }
-
 async function sign() {
-  if (!verified || submitting || !provider || selectedAccount !== OWNER || !moduleSchema) return;
-  submitting = true;
-  id('sign').disabled = true;
-  status('Đang mở Concordium Wallet. Chỉ xác nhận nếu mạng Testnet, contract 12802/0 và hàm setAgentURI đều đúng.');
+  if (!ready || busy || !provider || approvedAccount !== AGENT.owner) return;
+  busy = true; disableSigning(); $('check').disabled = true;
+  preflightStage = 'final';
+  setStatus('Rechecking Testnet, Agent Card and contract parameter before opening your wallet…');
   try {
-    const chain = await provider.getSelectedChain();
-    const selected = await provider.getMostRecentlySelectedAccount();
-    if (typeof chain !== 'string' || !chain.toLowerCase().startsWith(GENESIS_PREFIX) || selected !== OWNER)
-      throw Error('Ví hoặc mạng đã thay đổi. Kiểm tra lại từ đầu.');
+    const current = await provider.getMostRecentlySelectedAccount();
+    assertAccount(current);
+    await assertChain(provider);
     await verifyCard();
-    const transactionHash = await provider.sendTransaction(
-      OWNER,
+    const { schema } = getSigningParameter();
+    const hash = await provider.sendTransaction(
+      AGENT.owner,
       AccountTransactionType.Update,
       {
         amount: CcdAmount.fromMicroCcd(0n),
-        contractAddress: { index: 12802n, subindex: 0n },
-        receiveName: 'CIS-8004.setAgentURI',
+        contractAddress: { index: AGENT.contractIndex, subindex: AGENT.contractSubindex },
+        receiveName: AGENT.entrypoint,
         maxContractExecutionEnergy: 30000n,
       },
       PARAMETER_JSON,
-      { type: 'module', value: toBase64(moduleSchema) }
+      { type: 'Parameter', value: base64(schema) },
     );
-    if (!/^[a-fA-F0-9]{64}$/.test(transactionHash)) throw Error('Ví trả về transaction hash không hợp lệ.');
-    id('tx').textContent = transactionHash;
-    id('explorer').href = 'https://ccdexplorer.io/testnet/transaction/' + transactionHash;
-    id('tx-panel').hidden = false;
-    status('Ví đã gửi giao dịch. Đợi trạng thái FINALIZED trên CCDExplorer rồi bấm kiểm tra badge. Chưa coi là thành công trước khi xác minh.', 'good');
+    const tx = typeof hash === 'string' ? hash.replace(/^0x/, '') : '';
+    if (!/^[a-f\d]{64}$/i.test(tx)) throw new Error('Wallet returned an unexpected transaction hash.');
+    $('tx').textContent = tx;
+    $('explorer').href = 'https://ccdexplorer.io/testnet/transaction/' + tx;
+    $('tx-panel').hidden = false;
+    setStatus('Transaction submitted. Confirm FINALIZED on CCDExplorer, then verify the badge. Submission alone is not finality.', 'good');
   } catch (error) {
-    status('Giao dịch chưa được xác nhận: ' + (error?.message || String(error)), 'bad');
+    renderError('Transaction not confirmed', error);
   } finally {
-    submitting = false;
-    lock();
+    busy = false;
+    $('check').disabled = false;
+    disableSigning();
   }
 }
-
 async function verifyBadge() {
-  id('verify').disabled = true;
-  status('Đang kiểm tra Agent Badge qua registry...');
+  $('verify').disabled = true;
+  setStatus('Checking the on-chain badge verification result…');
   try {
-    const response = await fetch('https://agent-registry-mcp.concordium.com/v1/check-badge/' + BADGE, {cache:'no-store'});
-    if (!response.ok) throw Error('Không truy cập được registry từ trình duyệt. Có thể dùng lệnh curl để xác minh.');
-    const data = await response.json();
-    const success = data.badge_valid === true && data.extension_conformant === true &&
-      data.verification_present === true && Array.isArray(data.issues) && data.issues.length === 0;
-    id('result').textContent = JSON.stringify(data, null, 2);
-    status(success ? 'Agent Badge đã được xác minh đầy đủ!' : 'Badge chưa đạt đủ điều kiện. Kiểm tra giao dịch và metadata trên blockchain.', success ? 'good' : 'bad');
-  } catch (err) { status('Lỗi xác minh: ' + err.message, 'bad'); }
-  finally { id('verify').disabled = false; }
+    // Same-origin server-side resolver avoids browser cross-origin API restrictions.
+    const res = await fetch('/api/verify?badge=' + encodeURIComponent(AGENT.badge), {cache:'no-store'});
+    if (!res.ok) throw new Error('Verification endpoint returned HTTP ' + res.status);
+    const data = await res.json();
+    $('result').textContent = JSON.stringify(data, null, 2);
+    setStatus(
+      data.ok === true ? 'Agent #1323 verification passed.' :
+        'Agent #1323 is not fully verified yet (' + (data.code || 'UNKNOWN') + '). Confirm FINALIZED and check metadata hash.',
+      data.ok === true ? 'good' : 'bad'
+    );
+  } catch (error) {
+    setStatus('Badge verification failed: ' + copyableError(error), 'bad');
+  } finally { $('verify').disabled = false; }
 }
-id('check').addEventListener('click', preflight);
-id('sign').addEventListener('click', sign);
-id('verify').addEventListener('click', verifyBadge);
-id('wallet-info').textContent = OWNER;
-id('uri-info').textContent = CARD_URL;
-id('hash-info').textContent = METADATA_SHA256;
+$('check').addEventListener('click', preflight);
+$('sign').addEventListener('click', sign);
+$('verify').addEventListener('click', verifyBadge);
+$('wallet-info').textContent = AGENT.owner;
+$('uri-info').textContent = AGENT.cardUrl;
+$('hash-info').textContent = AGENT.cardHash;

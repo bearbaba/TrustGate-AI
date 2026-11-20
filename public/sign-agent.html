@@ -1,49 +1,57 @@
 <!doctype html>
-<html lang="vi"><head>
+<html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#08161f">
-<title>TrustGate AI — Ký cập nhật Agent #1323</title>
+<meta name="description" content="TrustGate AI's secure Concordium Testnet metadata update for verified Agent #1323.">
+<title>TrustGate AI — Agent #1323 Metadata</title>
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/sign-agent.css">
 <script defer src="/sign-agent.js"></script>
 </head><body><main class="sign-wrap">
 <a href="/" class="back">← TrustGate AI / Decision Lab</a>
 <div class="eyebrow">CONCORDIUM TESTNET · CIS-8004</div>
-<h1>Liên kết <span>Agent #1323</span></h1>
-<p class="lead">Trang này dành riêng cho chủ sở hữu Agent #1323 để cập nhật Metadata URL và SHA-256. Không thu khóa riêng, không chuyển CCD vào contract và chỉ ký sau khi kiểm tra dữ liệu.</p>
-<div class="pill-inline">Testnet only · Wallet approval required</div>
+<h1>Link your <span>Agent #1323</span></h1>
+<p class="lead">Securely attach the published TrustGate AI Agent Card to your registered Concordium agent. The wallet stays in your control. No recovery phrase or private key is requested.</p>
+<div class="pill-inline">Testnet only · Owner approval required</div>
 <div class="panel sign-card">
-<h2>Thông tin giao dịch cố định</h2>
+<div class="card-heading"><div><small class="eyebrow">TRANSACTION PREVIEW</small><h2>Fixed on-chain update</h2></div><span class="muted-tag">setAgentURI</span></div>
 <dl>
+<dt>Network</dt><dd>Concordium Testnet</dd>
 <dt>Contract</dt><dd>&lt;12802,0&gt; · CIS-8004.setAgentURI</dd>
 <dt>Agent</dt><dd>#1323 · JyP9UhV91L3jWGjHH4aB7</dd>
-<dt>Ví chủ sở hữu</dt><dd id="wallet-info"></dd>
+<dt>Owner wallet</dt><dd id="wallet-info"></dd>
 <dt>Metadata URL</dt><dd id="uri-info"></dd>
 <dt>SHA-256</dt><dd id="hash-info"></dd>
-<dt>Giới hạn Energy</dt><dd>30,000 (test CCD gas)</dd>
-<dt>CCD chuyển vào contract</dt><dd>0 CCD (không gồm phí gas mạng)</dd>
-</dl>
-</div>
+<dt>Maximum energy</dt><dd>30,000 (test CCD network fee)</dd>
+<dt>Contract transfer</dt><dd>0 CCD (network fee excluded)</dd>
+</dl></div>
 <div class="panel sign-card">
-<h2>Kết nối và xác minh</h2>
-<p>Nhấn kiểm tra. Ví sẽ yêu cầu kết nối tài khoản, rồi ứng dụng xác nhận mạng và mã hóa tham số với schema on-chain trước khi bật ký.</p>
-<div class="sign-actions">
-<button type="button" class="outline" id="check">1 · Kết nối và kiểm tra</button>
-<button type="button" class="primary" id="sign" disabled>2 · Ký bằng Concordium Wallet</button>
+<div class="card-heading"><div><small class="eyebrow">SECURITY PRECHECKS</small><h2>Connect & verify</h2></div></div>
+<p>Run the checks before signing. The contract parameter is encoded locally and compared byte-for-byte against the official Concordium builder output. The signing button remains locked until all checks pass.</p>
+<div class="check-grid">
+<div id="stage-wallet" data-state="idle"><strong>01. Wallet connection</strong><small>Not started</small></div>
+<div id="stage-network" data-state="idle"><strong>02. Testnet and owner</strong><small>Not started</small></div>
+<div id="stage-card" data-state="idle"><strong>03. Agent Card integrity</strong><small>Not started</small></div>
+<div id="stage-parameters" data-state="idle"><strong>04. Contract parameters</strong><small>Not started</small></div>
 </div>
-<div class="status" id="status" role="status" aria-live="polite">Chưa kết nối ví. Bắt đầu bằng bước 1.</div>
-<p class="subdued">Tài khoản kết nối: <code id="account">Chưa kết nối</code></p>
+<div class="sign-actions">
+<button type="button" class="outline" id="check">1 · Connect & run checks</button>
+<button type="button" class="primary" id="sign" disabled>2 · Review & sign in Wallet</button>
+</div>
+<div class="status" id="status" role="status" aria-live="polite">Not connected. Start with step 1.</div>
+<p class="subdued">Connected account: <code id="account">Not connected</code></p>
 </div>
 <div class="panel sign-card" id="tx-panel" hidden>
-<h2>Giao dịch đã gửi</h2>
-<p>Đã nhận được transaction hash, nhưng cần chờ FINALIZED và đối chiếu với registry mới coi là thành công.</p>
+<h2>Transaction submitted</h2>
+<p>Verify that the transaction is FINALIZED before treating the metadata update as complete.</p>
 <code id="tx"></code>
-<p><a id="explorer" target="_blank" rel="noopener noreferrer">Mở transaction trên CCDExplorer ↗</a></p>
+<p><a id="explorer" target="_blank" rel="noopener noreferrer">View transaction on CCDExplorer ↗</a></p>
 </div>
 <div class="panel sign-card">
-<h2>Kiểm tra sau giao dịch</h2>
-<button type="button" class="outline" id="verify">Kiểm tra Agent Badge</button>
-<pre id="result">Chưa kiểm tra.</pre>
+<h2>Verify on-chain badge</h2>
+<p>After the transaction is FINALIZED, check the badge verification status.</p>
+<button type="button" class="outline" id="verify">Check Agent #1323 badge</button>
+<pre id="result">Not checked yet.</pre>
 </div>
-<p class="footnote">Không bao giờ cung cấp recovery phrase, private key hoặc file xuất ví cho trang web. Nếu màn hình ví hiển thị Mainnet hay contract khác, hãy từ chối.</p>
+<p class="footnote">Do not share wallet recovery phrases, private keys or wallet exports. Reject a wallet request if the network, contract, or method differs from the preview above.</p>
 </main></body></html>

@@ -10,7 +10,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: npm install --no-audit --no-fund
       - run: npm run check
       - run: npm test
+      - run: npm run build
       - name: Print registered Agent Card SHA-256
         run: sha256sum public/.well-known/agent-card.json
