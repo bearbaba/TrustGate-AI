@@ -58,11 +58,30 @@ The owner provided the complete results in the project discussion. The wallet si
 
 **Limit:** Reverification proves an owner-signed read-only request and the current badge state. It does **not** independently certify server issuance time, replay resistance, non-repudiable publication, service payment, or execution of any transfer.
 
+## v0.5 Policy Witness — successful Production verification
+
+On 2026-11-20, the owner submitted a fresh v0.5 Live Proof receipt to the Production `Verify Receipt` flow at https://trustgate-ai.vercel.app/live-proof and shared the resulting verification response.
+
+- `ok: true`
+- `code: SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED`
+- `checks.integrity: true`
+- `checks.requestBinding: true`
+- `checks.policyWitness: true`
+- `checks.ownerSignature: true`
+- `checks.currentRegistry: true`
+- `checks.currentCardMatch: true`
+- `verifiedAt: 2026-11-20T11:47:33.331Z`
+- `registryCheckedAt: 2026-11-20T11:47:33.011Z`
+
+This **owner-observed Production result** validates the v0.5 Policy Witness, signed request and current on-chain Agent #1323 checks end-to-end. The response explicitly does **not** certify historical server issuance, immutable history, durable replay prevention or payment. The separate Attack Lab mutation scenarios and $6/$12 policy paths still require owner-observed Production results.
+
 ## Testing checklist
 
 - [x] v0.3 ALLOW completed with owner wallet on Production, receipt returned
 - [x] v0.4 ALLOW completed with owner wallet; download and independently verify JSON (all 5 checks true, 2026-11-20)
-- [ ] v0.4 REVIEW ($6) completed with owner wallet and no receipt issued
-- [ ] v0.4 BLOCK ($12) completed with owner wallet and no receipt issued
+- [x] v0.5 Policy Witness Production receipt verification passed all 6 checks at 2026-11-20T11:47:33.331Z
+- [ ] v0.5 Attack Lab original and tampered receipt scenarios confirmed with owner wallet
+- [ ] v0.4/v0.5 REVIEW ($6) completed with owner wallet and no receipt issued
+- [ ] v0.4/v0.5 BLOCK ($12) completed with owner wallet and no receipt issued
 
 All amounts are *hypothetical policy inputs*, not payments. No x402 or real spending has been implemented.

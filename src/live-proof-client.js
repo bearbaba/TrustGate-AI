@@ -74,14 +74,31 @@ $('verify-receipt').addEventListener('click', async () => {
     const data=JSON.parse(await file.text());
     const receipt=data?.receipt;
     if(!receipt)throw Error('File does not contain a receipt.');
+    if(receipt.version === 'trustgate-public-receipt/v1') {
+      $('receipt-status').textContent='Legacy v0.4 receipt detected. This checks the owner signature and current badge, not a Policy Witness. Generate a new Live Proof receipt for full verification.';
+    } else if(receipt.version === 'trustgate-public-receipt/v2' && receipt.policyWitness) {
+      $('receipt-status').textContent='v0.5 Policy Witness detected. Checking the signed request, reproducible policy and current on-chain badge…';
+    } else {
+      $('receipt-status').textContent='Unexpected receipt version or missing policy witness. Verifying safely…';
+    }
     const response=await fetch('/api/verify-receipt',{
       method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',
       body:JSON.stringify({receipt})
     });
     if(!response.ok)throw Error('Verification endpoint returned HTTP '+response.status);
     const verdict=await response.json();
-    $('receipt-status').textContent=verdict.ok?'Owner signature and current badge verified. Not a server timestamp or payment proof.':
+    const full=verdict.ok === true && verdict.checks?.policyWitness === true &&
+      verdict.code === 'SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED';
+    const legacy=verdict.ok === true &&
+      verdict.code === 'OWNER_SIGNATURE_AND_CURRENT_BADGE_VERIFIED_LEGACY';
+    $('receipt-status').textContent=full?
+      'FULL v0.5 VERIFIED — all 6 checks passed: integrity, request binding, Policy Witness, owner signature, current registry and Agent Card. This is not a server attestation or payment proof.':
+      legacy?
+      'LEGACY v0.4 VERIFIED — owner signature and current badge passed, but Policy Witness was NOT checked. Generate a fresh v0.5 Live Proof receipt.':
+      verdict.ok?
+      'PARTIAL verification ('+verdict.code+'). Do not treat this as a complete v0.5 Policy Witness validation.':
       'Receipt rejected: '+verdict.code;
+    $('receipt-status').className='status '+(full||legacy?'good':'bad');
     $('receipt-verification').textContent=JSON.stringify(verdict,null,2);
   }catch(err){
     $('receipt-status').textContent='Unable to verify: '+(err?.message||'Invalid receipt');

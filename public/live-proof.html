@@ -20,7 +20,7 @@
 <div class="panel live-panel">
 <details class="receipt-details">
 <summary>04 / Verify a downloaded receipt</summary>
-<p>Upload a v0.5 receipt for the full policy witness check. v0.4 receipts remain supported as legacy proofs. TrustGate will recompute the policy decision and digest, verify the owner's real wallet signature against Testnet credentials, and recheck the <em>current</em> on-chain Agent Card.</p>
+<p>For all six checks, generate a new v0.5 Live Proof receipt (version <code>trustgate-public-receipt/v2</code>) and upload it here. Older v0.4 files can verify wallet ownership and current badge only, and will be clearly labelled LEGACY. TrustGate will recompute the policy decision and digest, verify the owner's real wallet signature against Testnet credentials, and recheck the <em>current</em> on-chain Agent Card.</p>
 <div class="receipt-tools"><input id="receipt-file" type="file" accept="application/json,.json" aria-label="Choose a TrustGate receipt"><button class="outline" id="verify-receipt" type="button">Verify receipt</button></div>
 <div class="status" id="receipt-status" role="status">No receipt selected.</div>
 <pre id="receipt-verification"></pre>
