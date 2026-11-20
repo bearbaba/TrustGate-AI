@@ -3,6 +3,7 @@ import {
   AccountTransactionType,
   CcdAmount,
   ContractAddress,
+  ContractName,
   ConcordiumGRPCClient,
   EntrypointName,
   Parameter,
@@ -78,13 +79,15 @@ async function preflight() {
     const grpc = new ConcordiumGRPCClient(provider.grpcTransport);
     const contract = ContractAddress.create(12802n, 0n);
     const info = await grpc.getInstanceInfo(contract);
-    const contractName = toPlain(info?.name);
-    if (contractName !== 'CIS-8004') throw Error('Tên contract on-chain không khớp: ' + contractName);
-    if (!info?.sourceModule?.moduleRef) throw Error('Không lấy được module reference của contract.');
-    moduleSchema = await grpc.getEmbeddedSchema(info.sourceModule.moduleRef);
+    const contractName = ContractName.fromInitName(info.name);
+    if (ContractName.toString(contractName) !== 'CIS-8004')
+      throw Error('Tên contract on-chain không khớp: ' + ContractName.toString(contractName));
+    const moduleRef = info?.sourceModule?.moduleRef || info?.sourceModule;
+    if (!moduleRef) throw Error('Không lấy được module reference của contract.');
+    moduleSchema = await grpc.getEmbeddedSchema(moduleRef);
     if (!moduleSchema) throw Error('Contract không trả về embedded schema; không thể ký an toàn.');
     const bytes = serializeUpdateContractParameters(
-      info.name,
+      contractName,
       EntrypointName.fromString('setAgentURI'),
       PARAMETER_JSON,
       moduleSchema
