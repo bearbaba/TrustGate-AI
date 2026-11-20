@@ -63,5 +63,11 @@
         "audit"
       ]
     }
+  ],
+  "registrations": [
+    {
+      "agentId": 1323,
+      "agentRegistry": "ccd:4221332d34e1694168c2a0c0b3fd0f27:12802.0"
+    }
   ]
 }
