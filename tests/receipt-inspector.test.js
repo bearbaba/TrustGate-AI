@@ -60,7 +60,7 @@ test('offline mode intentionally cannot authenticate a forged wallet signature',
   const report=inspectReceiptOffline(attachDigest(body));
   assert.equal(report.ok,true);
   assert.equal(report.mode,'OFFLINE_STRUCTURAL_ONLY');
-  assert.ok(report.warning.includes('DOES NOT verify'));
+  assert.ok(/does not verify/i.test(report.warning));
 });
 test('independent CLI offline run reports warnings, and exits nonzero on a tampered receipt',async()=>{
   const dir=await mkdtemp(join(tmpdir(),'trustgate-verifier-'));
@@ -72,7 +72,7 @@ test('independent CLI offline run reports warnings, and exits nonzero on a tampe
     const valid=spawnSync(process.execPath,[cmd,file,'--offline'],{encoding:'utf8',timeout:10000});
     assert.equal(valid.status,0,valid.stderr);
     const report=JSON.parse(valid.stdout);
-    assert.equal(report.mode,'OFFLINE');
+    assert.equal(report.mode,'OFFLINE_STRUCTURAL_ONLY');
     assert.equal(report.ok,true);
     assert.equal(report.code,'OFFLINE_STRUCTURE_CONSISTENT_NOT_AUTHENTICATED');
 
