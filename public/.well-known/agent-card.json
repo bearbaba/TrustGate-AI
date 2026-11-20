@@ -1,44 +1,67 @@
 {
   "name": "TrustGate AI",
-  "description": "Fail-closed identity verification and deterministic payment-intent policy review for autonomous agents. The service checks CIS-8004 Concordium badge verification results, validates recipient allowlists and request limits, then returns an explainable ALLOW, REVIEW or BLOCK decision. Prototype only: no autonomous wallet signing, transfers or x402 payment execution.",
-  "version": "0.1.0",
+  "description": "A read-only, fail-closed Concordium agent badge verifier and deterministic payment-intent policy prototype. Reviews agent identity, recipient allowlist and per-request limits to produce ALLOW, REVIEW or BLOCK. ALLOW is NOT a transfer authorization; no wallet signing, payments, or x402 settlement is executed.",
+  "version": "0.1.1",
   "url": "https://trustgate-ai.vercel.app/.well-known/agent-card.json",
   "provider": {
     "organization": "TrustGate AI",
     "url": "https://trustgate-ai.vercel.app"
   },
   "documentationUrl": "https://github.com/bearbaba/TrustGate-AI",
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extensions": [
+      {
+        "uri": "https://docs.concordium.com/a2a-extensions/concordium-badge/v1",
+        "description": "Verified by Concordium badge — CIS-8004 on-chain identity (card integrity pending anchor)",
+        "required": false,
+        "params": {
+          "tokenAddress": "ccd:4221332d34e1694168c2a0c0b3fd0f27/cis-2:JyP9UhV91L3jWGjHH4aB7",
+          "owner": {
+            "account": "ccd:4221332d34e1694168c2a0c0b3fd0f27:34C1ozW8edKtBmA8FUFoR4aBys8ofuwtRmYqqbzNVPAsATT4wk"
+          },
+          "contracts": {
+            "cis8004": "ccd:4221332d34e1694168c2a0c0b3fd0f27:12802.0",
+            "cis8": "ccd:4221332d34e1694168c2a0c0b3fd0f27:12801.0"
+          },
+          "verify": "Resolve tokenAddress via CIS-8004 agent_of; require status Active and card SHA-256 equal to on-chain metadata_hash.",
+          "verification": {
+            "service": "Concordium Agent Registry",
+            "verifyUrl": "https://agent-registry-mcp.concordium.com/v1/badge-check/JyP9UhV91L3jWGjHH4aB7",
+            "mcp": "https://agent-registry-mcp.concordium.com/mcp",
+            "docs": "https://docs.concordium.com/en/mainnet/technical-reference/agent-registry/concordium-badge.html"
+          }
+        }
+      }
+    ]
+  },
   "skills": [
     {
       "id": "verify-agent-identity",
-      "name": "Verify agent identity",
-      "description": "Check a Concordium CIS-8004 agent badge through the official server-side registry endpoint before evaluating intents.",
+      "name": "Verify Concordium agent identity",
+      "description": "Checks an agent badge against Concordium registry verification results. Fail closed when registry or card-hash attestation is unavailable.",
       "tags": [
         "concordium",
         "cis-8004",
-        "agent-identity",
-        "security"
+        "identity"
       ]
     },
     {
       "id": "evaluate-payment-intent",
-      "name": "Evaluate payment intent",
-      "description": "Deterministically return ALLOW, REVIEW or BLOCK according to identity verification, allowlisted recipient, purpose and per-request USD amount; no payment is executed.",
+      "name": "Review payment intent",
+      "description": "Deterministically classifies a proposed service payment as ALLOW, REVIEW or BLOCK without executing payment or modifying wallet balances.",
       "tags": [
         "policy",
-        "payments",
-        "allow-review-block",
+        "review",
         "audit"
       ]
     }
-  ],
-  "concordium": {
-    "chain_id": "concordium:testnet",
-    "token_address": null,
-    "owner": "34C1ozW8edKtBmA8FUFoR4aBys8ofuwtRmYqqbzNVPAsATT4wk",
-    "services": {
-      "verifyIdentity": "https://trustgate-ai.vercel.app/api/verify",
-      "evaluateIntent": "https://trustgate-ai.vercel.app/api/evaluate"
-    }
-  }
+  ]
 }
