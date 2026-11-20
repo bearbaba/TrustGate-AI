@@ -1,0 +1,14 @@
+{
+  "name": "trustgate-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fail-closed Concordium agent identity and payment-intent policy review prototype",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node server.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check server.js && node --check lib/concordium.js && node --check lib/engine.js && node --check api/verify.js && node --check api/evaluate.js"
+  },
+  "license": "MIT"
+}
