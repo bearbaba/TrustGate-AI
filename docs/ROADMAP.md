@@ -16,7 +16,9 @@
 - [x] Confirmed Agent #1323 metadata URL in the official registry and its hash in the verifier response
 - [ ] Independently smoke-test deployed Decision Lab against live Agent #1323 (fixture-based regression checks added; runtime response still requires verification)
 - [x] Added signed public evidence demo with owner wallet signature and policy-gated on-chain receipt (no payment)
-- [ ] Test full signed proof flow with owner wallet on Vercel against live Testnet gRPC
+- [x] Owner confirmed full signed proof flow via Vercel: wallet signature, verified Agent #1323, policy ALLOW, JSON receipt issued at 2026-11-20T11:02:48.626Z (v0.3)
+- [ ] Run fresh v0.4 signed proof + receipt re-verification on Vercel with owner wallet
+- [ ] Validate REVIEW and BLOCK outcomes on Production after signature and badge checks
 - [x] Implement identity-bound *read-only public* service policy demo and document replay/financial security boundaries
 - [ ] Implement meaningful end-to-end x402 test payment only if safely feasible; otherwise disclose it as planned, not shipped
 - [ ] Add durable audit, replay/idempotency protection, rate limits and server-side persistent challenge store **before** enabling paid or write-sensitive flows

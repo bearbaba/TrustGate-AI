@@ -45,9 +45,11 @@ $('run').addEventListener('click',async()=>{
     if(data.decision==='ALLOW'){
       setStage('registry','pass');setStage('policy','pass');setMessage('Verified! A fresh, read-only evidence receipt was issued. No funds moved.','good');
     }else if(data.decision==='REVIEW'){
-      setStage('registry','pass');setStage('policy','review');setMessage('Human review required. Evidence was not issued.','bad');
+      setStage('registry',data.identityVerified?'pass':'fail');setStage('policy','review');
+      setMessage('Verified identity; human review required. No receipt was issued.','bad');
     }else{
-      setStage('registry','fail');setStage('policy','fail');setMessage('Request denied: '+data.reasons.join(', '),'bad');
+      setStage('registry',data.identityVerified?'pass':'fail');setStage('policy','fail');
+      setMessage('Request denied: '+data.reasons.join(', '),'bad');
     }
   }catch(err){
     setMessage('Request not completed: '+(err?.message||'Wallet or network error'),'bad');
@@ -60,4 +62,29 @@ $('download').addEventListener('click',()=>{
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download='trustgate-live-proof-'+result.id+'.json';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+
+$('verify-receipt').addEventListener('click', async () => {
+  const file = $('receipt-file').files?.[0];
+  if (!file) { $('receipt-status').textContent='Select a receipt JSON file first.'; return; }
+  if (file.size > 25000) { $('receipt-status').textContent='Receipt file is too large.'; return; }
+  $('verify-receipt').disabled=true;
+  $('receipt-status').textContent='Checking local SHA-256, wallet signature and current Concordium registry…';
+  try {
+    const data=JSON.parse(await file.text());
+    const receipt=data?.receipt;
+    if(!receipt)throw Error('File does not contain a receipt.');
+    const response=await fetch('/api/verify-receipt',{
+      method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',
+      body:JSON.stringify({receipt})
+    });
+    if(!response.ok)throw Error('Verification endpoint returned HTTP '+response.status);
+    const verdict=await response.json();
+    $('receipt-status').textContent=verdict.ok?'Owner signature and current badge verified. Not a server timestamp or payment proof.':
+      'Receipt rejected: '+verdict.code;
+    $('receipt-verification').textContent=JSON.stringify(verdict,null,2);
+  }catch(err){
+    $('receipt-status').textContent='Unable to verify: '+(err?.message||'Invalid receipt');
+    $('receipt-verification').textContent='';
+  }finally{$('verify-receipt').disabled=false;}
 });

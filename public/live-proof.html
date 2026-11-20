@@ -16,6 +16,15 @@
 <div id="flow-registry" data-state="idle"><b>03</b><strong>Account + badge</strong><small>Live Concordium read</small></div>
 <div id="flow-policy" data-state="idle"><b>04</b><strong>Access policy</strong><small>ALLOW / REVIEW / BLOCK</small></div>
 </div><div role="status" aria-live="polite" id="flow-status" class="status">Ready. Connect the owner wallet to begin.</div></div>
-<div class="panel live-panel" id="result" hidden><div class="block-header"><div><small>03 / RESULT</small><h2>Signed evidence result</h2></div><span id="verdict" class="proof-verdict"></span></div><p id="reasons"></p><pre id="receipt"></pre><button type="button" class="outline" id="download" disabled>Download receipt JSON ↓</button></div>
-<div class="live-footer">Security boundary: the result is a public, read-only snapshot. No payment settlement, x402 charge, replay-resistant service token, or durable audit storage is implemented. Nonces expire after 90 seconds, but this stateless public demo does not provide durable replay prevention.</div>
+<div class="panel live-panel" id="result" hidden><div class="block-header"><div><small>03 / RESULT</small><h2>Verified request outcome</h2></div><span id="verdict" class="proof-verdict"></span></div><p id="reasons"></p><pre id="receipt"></pre><button type="button" class="outline" id="download" disabled>Download receipt JSON ↓</button></div>
+<div class="panel live-panel">
+<details class="receipt-details">
+<summary>04 / Verify a downloaded receipt</summary>
+<p>Upload a receipt issued by the new v0.4 flow. TrustGate will recompute its checksum, verify the owner's actual wallet signature against Testnet credentials, and recheck the <em>current</em> on-chain Agent Card.</p>
+<div class="receipt-tools"><input id="receipt-file" type="file" accept="application/json,.json" aria-label="Choose a TrustGate receipt"><button class="outline" id="verify-receipt" type="button">Verify receipt</button></div>
+<div class="status" id="receipt-status" role="status">No receipt selected.</div>
+<pre id="receipt-verification"></pre>
+<p><small>A SHA-256 checksum alone is not proof of who issued a receipt. This check verifies the signed owner request and the <strong>current</strong> registry state, not historical server issuance time, guaranteed non-replay or any payment.</small></p>
+</details></div>
+<div class="live-footer">Security boundary: the result is a public, read-only snapshot. No payment settlement, x402 charge, replay-resistant service token, server-signed timestamp, or durable audit storage is implemented. Nonces expire after 90 seconds, but this stateless public demo does not provide durable replay prevention.</div>
 </main></body></html>
