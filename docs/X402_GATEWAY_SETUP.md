@@ -1,6 +1,6 @@
 # TrustGate AI — Concordium Testnet x402 Gateway (v0.7)
 
-**Status: Source and API gating implemented; real payment NOT YET ENABLED or verified.**
+**Status: Testnet Merchant public address configured in Vercel Production; gateway remains LOCKED and no payment has been executed.**
 
 The gateway uses the official `@x402/core@2.31.0` and `@x402/concordium@2.31.0` packages for the Concordium `exact` scheme. It is intentionally disabled on the public deployment until all necessary Testnet configuration exists. It must not be presented as real payment settlement before a transaction is verified.
 
@@ -21,6 +21,14 @@ Native token: `CCD`, amount `100000` microCCD = **0.1 Testnet CCD**. This is NOT
 - With `PAYMENT-SIGNATURE`, the server verifies the official payment payload against exact requirements, reserves the signed nonce and payment payload atomically in the **shared Redis** replay store, and calls facilitator settlement. Only after successful finalization and persistence does it return `PAID_VERIFIED_AGENT_EVIDENCE` with the on-chain transaction ID and the protocol `PAYMENT-RESPONSE` header.
 
 **No wallet private key, seed phrase or sponsor signing key is ever stored in this repository or requested by the UI.**
+
+## Verified Merchant address
+
+Public Merchant Testnet account (separate from Agent #1323 owner):
+
+`4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf`
+
+This address has valid Concordium Base58Check format and was saved in Vercel Production as `TRUSTGATE_X402_MERCHANT_ADDRESS` on 2026-11-20. The address alone does not establish on-chain existence, ownership, account balance or settlement. No funds were moved. Payment remains locked unless a live facilitator, replay store and explicit enable flag are also configured.
 
 ## Required environment variables on Vercel (Production only)
 
@@ -55,7 +63,7 @@ Open https://trustgate-ai.vercel.app/x402-gateway to inspect readiness. The gate
 - [x] Scoped wallet-ownership signature distinct from sponsored transfer signature
 - [x] Atomic shared nonce/payload reserve and post-settlement persistence code
 - [x] Mock-backed tests of 402, verify, replay rejection and settlement prerequisite
-- [ ] Merchant Testnet account supplied and configured
+- [x] Merchant Testnet public address supplied and saved to Vercel Production (checksum validated; on-chain existence/ownership not independently verified)
 - [ ] Compatible sponsored facilitator set up, verified and funded (if required)
 - [ ] Secure Redis credentials configured, with a separate reconciliation plan
 - [ ] Paying client with owner-controlled V1 sponsored transaction signing

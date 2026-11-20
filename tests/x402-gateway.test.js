@@ -5,7 +5,7 @@ import { handleX402 } from '../lib/x402-gateway.js';
 import { replayKeys, reserveX402Payment } from '../lib/x402-store.js';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
 
-const merchant='4FmiTW2L4RvCsSVTjFAavYvrgnPLGNj43eiwPYmbhNqtAcMbWW';
+const merchant='4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf';
 const env={
   TRUSTGATE_X402_ENABLED:'testnet',
   TRUSTGATE_X402_MERCHANT_ADDRESS:merchant,
@@ -70,6 +70,8 @@ test('real Testnet gateway stays locked without merchant, sponsor and atomic sto
 });
 test('reject sender-as-merchant, non-HTTPS facilitator and invalid configuration',()=>{
   assert.equal(config.configured,true);
+  // Correct alphabet and length do not imply a valid Concordium checksum.
+  assert.equal(readX402Config({...env,TRUSTGATE_X402_MERCHANT_ADDRESS:'4FmiTW2L4RvCsSVTjFAavYvrgnPLGNj43eiwPYmbhNqtAcMbWW'}).configured,false);
   assert.equal(readX402Config({...env,TRUSTGATE_X402_MERCHANT_ADDRESS:PROOF_CONTEXT.owner}).configured,false);
   assert.equal(readX402Config({...env,TRUSTGATE_X402_FACILITATOR_URL:'http://localhost:3000'}).configured,false);
   assert.equal(readX402Config({...env,TRUSTGATE_X402_REDIS_TOKEN:''}).configured,false);
