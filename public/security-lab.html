@@ -32,5 +32,7 @@
 <div id="results" class="attack-results"><p class="muted">Each test reports the actual API result. A failed network request is never counted as a security success.</p></div>
 </section>
 <div class="lab-footer"><b>Security boundaries</b><p>The integrity digest by itself does not establish provenance. This lab validates an owner-signed intent, re-executes the current deterministic policy and checks current Concordium metadata. It does not establish historical server attestation, durable replay prevention, actual x402 payment, or security against an attacker who controls the verifier. For funds or private data, use a separately audited authorization and nonce store.</p>
-<a href="https://github.com/bearbaba/TrustGate-AI/blob/main/docs/POLICY_WITNESS.md" target="_blank" rel="noopener noreferrer">Read the verification model ↗</a></div>
+<a href="https://github.com/bearbaba/TrustGate-AI/blob/main/docs/POLICY_WITNESS.md" target="_blank" rel="noopener noreferrer">Read the verification model ↗</a>
+<p><b>Don't trust this server alone.</b> Run the verifier directly from the public GitHub source to check the policy, owner signature and current Concordium badge from your own computer.</p>
+<a href="https://github.com/bearbaba/TrustGate-AI/blob/main/docs/INDEPENDENT_VERIFICATION.md" target="_blank" rel="noopener noreferrer">Verify the receipt independently (Node.js CLI) ↗</a></div>
 </main></body></html>

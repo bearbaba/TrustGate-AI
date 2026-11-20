@@ -13,7 +13,7 @@
 | 01:05–01:18 | Download receipt, expand Verify Receipt, upload it | **Re-check the wallet signature and live registry.** |
 | 01:18–01:26 | Display all five receipt checks true | **Cryptographically checkable public evidence.** |
 | 01:26–01:40 | (Once user has validated them) show $6 REVIEW and $12 BLOCK | **A valid agent still faces spending policy controls.** |
-| 01:40–01:50 | End card: repository, website, on-chain proof link | **TrustGate AI · Verify before you authorize.** |
+| 01:40–01:50 | End card: source, website, on-chain transaction and independent verifier link | **TrustGate AI · Verify before you authorize.** |
 
 ## Recording guardrails
 

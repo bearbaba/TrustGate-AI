@@ -24,6 +24,8 @@
 - [x] Owner-confirmed Attack Lab: authentic receipt ACCEPTED and policy/signature/metadata forgeries REJECTED at their expected layer (4/4)
 - [x] Implement identity-bound *read-only public* service policy demo and document replay/financial security boundaries
 - [ ] Implement meaningful end-to-end x402 test payment only if safely feasible; otherwise disclose it as planned, not shipped
+- [x] Added independent open-source offline/live receipt verifier with explicit signature and registry trust boundaries (verify with fresh CLI run before marking live pass)
+- [ ] Add server-signed receipt issuance (production signing key must be managed securely outside GitHub)
 - [ ] Add durable audit, replay/idempotency protection, rate limits and server-side persistent challenge store **before** enabling paid or write-sensitive flows
 - [ ] Review frontend with screenshots/responsive checks, error handling, and deployed endpoints
 - [ ] Prepare 3-minute hackathon video, proof links, public source, and go-live plan

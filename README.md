@@ -42,6 +42,19 @@ A genuine Concordium x402 flow has **not** been implemented. The official `@x402
 
 **Owner-confirmed live test:** A fresh v0.5 Policy Witness receipt was verified on Production on 2026-11-20 at `11:47:33Z`: `SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED`, with all six checks true (integrity, request binding, policy, owner signature, registry and Agent Card). See [Live Proof evidence](docs/LIVE_PROOF_EVIDENCE.md). The Production Attack Lab was subsequently owner-tested: original receipt ACCEPTED and forged policy, signature, and metadata each REJECTED with the expected codes (4/4). See [Live Proof evidence](docs/LIVE_PROOF_EVIDENCE.md).
 
+## Independent third-party verification (v0.6)
+
+Reviewers can check an actual downloaded Policy Witness receipt **without trusting our hosted `/api/verify-receipt` endpoint**. The new offline/live CLI runs from the public GitHub source:
+
+```sh
+node scripts/verify-receipt.mjs path/to/receipt.json --offline
+node scripts/verify-receipt.mjs path/to/receipt.json --live
+```
+
+Offline mode independently checks receipt structure, SHA-256 and policy logic, but **cannot verify who signed the request or what is currently on-chain**. Live mode independently queries Concordium Testnet gRPC and the official CIS-8004 badge verifier; it does not call TrustGate's website. See [independent verification instructions](docs/INDEPENDENT_VERIFICATION.md).
+
+Neither mode proves the server originally issued the receipt. Enabling a server-signed issuance attestation and durable atomic nonce store requires secure environment configuration and persistent storage; neither is deployed.
+
 ## Start locally
 
 Requires Node.js 22 and npm. The signer and live proof pages use esbuild bundles. The proof backend requires outbound Concordium Testnet gRPC connectivity.
