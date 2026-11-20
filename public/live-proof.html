@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#08161f"><title>TrustGate AI — Live Proof</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/live-proof.css"><script defer src="/live-proof.js"></script></head>
+<body><main class="live-wrap"><a class="back" href="/">← TrustGate AI / Decision Lab</a>
+<div class="eyebrow">LIVE IDENTITY · CRYPTOGRAPHIC OWNERSHIP · READ-ONLY DELIVERY</div>
+<h1>Identity is proven.<br><span>Access is evaluated.</span></h1>
+<p class="live-lead">A working, Testnet-connected public evidence workflow for Concordium Agent <strong>#1323</strong>. The browser wallet signs a scoped challenge; the backend checks the signature against on-chain account credentials and freshly verifies the Agent Card before returning public evidence.</p>
+<div class="live-ribbon"><span>CONCORDIUM TESTNET</span><span>AGENT #1323</span><span>NO PAYMENT</span><span>NO MAINNET GAS</span></div>
+<div class="panel live-panel"><div class="block-header"><div><small>01 / INPUT</small><h2>Request verified evidence</h2></div><span class="note">Public demo · no payment</span></div>
+<div class="live-form"><div><label for="proof-badge">Registered Agent Badge</label><input id="proof-badge" value="JyP9UhV91L3jWGjHH4aB7" disabled></div><div><label for="proof-amount">Hypothetical spending policy amount</label><select id="proof-amount"><option value="1.00">$1.00 — ALLOW path</option><option value="6.00">$6.00 — REVIEW path</option><option value="12.00">$12.00 — BLOCK path</option></select></div><div class="live-full"><label for="proof-purpose">Evidence request purpose</label><input id="proof-purpose" maxlength="140" value="Retrieve a verified Concordium agent snapshot"></div></div>
+<p class="live-help">Amounts above are policy test inputs, not charges. A valid wallet signature proves control of the owner account, but does not authorize moving funds.</p>
+<button class="primary" id="run" type="button">Connect Wallet · Sign · Run Live Proof ↗</button></div>
+<div class="panel live-panel"><div class="block-header"><div><small>02 / VALIDATION</small><h2>Four checkpoints</h2></div></div>
+<div class="live-stages">
+<div id="flow-wallet" data-state="idle"><b>01</b><strong>Testnet owner wallet</strong><small>Connect wallet</small></div>
+<div id="flow-signature" data-state="idle"><b>02</b><strong>Sign request</strong><small>Gasless message</small></div>
+<div id="flow-registry" data-state="idle"><b>03</b><strong>Account + badge</strong><small>Live Concordium read</small></div>
+<div id="flow-policy" data-state="idle"><b>04</b><strong>Access policy</strong><small>ALLOW / REVIEW / BLOCK</small></div>
+</div><div role="status" aria-live="polite" id="flow-status" class="status">Ready. Connect the owner wallet to begin.</div></div>
+<div class="panel live-panel" id="result" hidden><div class="block-header"><div><small>03 / RESULT</small><h2>Signed evidence result</h2></div><span id="verdict" class="proof-verdict"></span></div><p id="reasons"></p><pre id="receipt"></pre><button type="button" class="outline" id="download" disabled>Download receipt JSON ↓</button></div>
+<div class="live-footer">Security boundary: the result is a public, read-only snapshot. No payment settlement, x402 charge, replay-resistant service token, or durable audit storage is implemented. Nonces expire after 90 seconds, but this stateless public demo does not provide durable replay prevention.</div>
+</main></body></html>

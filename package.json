@@ -1,21 +1,22 @@
 {
   "name": "trustgate-ai",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "Concordium agent identity and deterministic payment intent prototype",
+  "description": "Concordium-verified AI agent policy engine and signed public evidence access demo",
   "engines": {
     "node": "22.x"
   },
   "scripts": {
     "dev": "node server.js",
     "test": "node --test tests/*.test.js",
-    "check": "node --check server.js && node --check lib/concordium.js && node --check lib/engine.js && node --check api/verify.js && node --check api/evaluate.js && node --check src/sign-agent.js",
-    "build": "esbuild src/sign-agent.js --bundle --format=iife --platform=browser --target=es2020 --outfile=public/sign-agent.js"
+    "check": "node --check server.js && node --check lib/concordium.js && node --check lib/engine.js && node --check api/verify.js && node --check api/evaluate.js && node --check src/sign-agent.js && node --check src/live-proof-client.js && node --check lib/proof-message.js && node --check lib/live-proof.js && node --check api/live-proof.js",
+    "build": "esbuild src/sign-agent.js --bundle --format=iife --platform=browser --target=es2020 --outfile=public/sign-agent.js && esbuild src/live-proof-client.js --bundle --format=iife --platform=browser --target=es2020 --outfile=public/live-proof.js"
   },
   "dependencies": {
     "@concordium/web-sdk": "12.0.3",
-    "@concordium/browser-wallet-api-helpers": "3.3.0"
+    "@concordium/browser-wallet-api-helpers": "3.3.0",
+    "@grpc/grpc-js": "1.14.0"
   },
   "devDependencies": {
     "esbuild": "0.25.9"

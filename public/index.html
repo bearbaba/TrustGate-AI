@@ -14,7 +14,7 @@
 <div class="navlabel">WORKSPACE</div>
 <nav aria-label="Main navigation">
 <button class="nav active" data-view="lab" type="button">▦ &nbsp; Decision Lab</button>
-<button class="nav" data-view="trail" type="button">◷ &nbsp; Audit Trail</button>
+<a href="/live-proof" class="nav">✦ &nbsp; Live Proof</a><button class="nav" data-view="trail" type="button">◷ &nbsp; Audit Trail</button>
 <button class="nav" data-view="about" type="button">◎ &nbsp; Architecture</button>
 </nav>
 <div class="side-note"><span class="dot"></span> PROTOTYPE MODE<p>Agent badge checks are live where reachable. Payments are never executed.</p><a href="https://www.concordium.com/article/concordium-trusted-agents-hackathon-encode-club" target="_blank" rel="noopener noreferrer">Concordium programme ↗</a></div>
@@ -26,8 +26,9 @@
 <div class="eyebrow">IDENTITY · POLICY · ACCOUNTABILITY</div>
 <div class="hero"><div><h1>Trust first.<br><span>Then act.</span></h1><p>Verify AI agents using Concordium's on-chain registry, then review what each agent wants to do under a deterministic payment policy.</p></div><div class="hero-art" aria-hidden="true"><div>◇</div><small>VERIFY IDENTITY<br>ENFORCE POLICY</small></div></div>
 <div class="stats"><div><small>IDENTITY SOURCE</small><strong>Concordium</strong><span>Official badge resolver</span></div><div><small>POLICY MODE</small><strong>Fail-closed</strong><span>Deny unverified agents</span></div><div><small>EXECUTION</small><strong>Disabled</strong><span>No wallets or payments</span></div><div><small>POLICY</small><strong>v0.1</strong><span>Deterministic review</span></div></div>
+<div class="panel" style="margin-bottom:24px;padding:18px;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap"><div><strong style="color:var(--mint)">NEW · Live signed evidence flow</strong><div style="color:var(--muted);font-size:12px">Verified Agent #1323 + wallet ownership signature + policy-gated public proof</div></div><a class="primary" href="/live-proof">Open Live Proof ↗</a></div>
 <div class="section-title"><span>01 / VERIFICATION</span><h2>Verify the agent</h2><p>Enter a CIS-8004 badge (Base58Check token address or CAIP-19 form). The backend queries Concordium's official resolver.</p></div>
-<div class="panel verify-form"><div class="grow"><label for="badge">Concordium Agent Badge</label><input id="badge" name="badge" autocomplete="off" spellcheck="false" placeholder="Mf22... or ccd:.../cis-2:..." aria-describedby="badge-note"><small id="badge-note">No pasted credential is automatically trusted. A fresh check is required for each evaluation.</small></div><button class="primary" id="verifyBtn" type="button">Verify identity ↗</button></div>
+<div class="panel verify-form"><div class="grow"><label for="badge">Concordium Agent Badge</label><input id="badge" name="badge" autocomplete="off" spellcheck="false" value="JyP9UhV91L3jWGjHH4aB7" placeholder="JyP9... or ccd:.../cis-2:..." aria-describedby="badge-note"><small id="badge-note">No pasted credential is automatically trusted. A fresh check is required for each evaluation.</small></div><button class="primary" id="verifyBtn" type="button">Verify identity ↗</button></div>
 <div class="status" id="verifyStatus" role="status" aria-live="polite"><b id="verifyHeading">Awaiting verification</b><p id="verifyText">Provide a badge and run the official check.</p></div>
 <div class="section-title next"><span>02 / POLICY DECISION</span><h2>Review a payment intent</h2><p>Identify the requesting agent, recipient and amount. Approval here is NOT execution.</p></div>
 <form id="evaluateForm" class="panel form-grid">
@@ -37,7 +38,7 @@
 <div class="form-action full"><small>Policy: under $5 ALLOW · $5–$10 REVIEW · above $10 BLOCK. Listed recipients only.</small><button id="evaluateBtn" class="primary" type="submit">Evaluate request ↗</button></div>
 </form>
 <div class="decision panel" id="decisionPanel" hidden><div class="decision-head"><span id="decisionBadge" class="verdict">—</span><div><h3 id="decisionHeading">No decision</h3><p id="decisionExplanation"></p></div></div><div class="decision-meta"><div><small>IDENTITY</small><strong id="decisionIdentity">—</strong></div><div><small>EXECUTION</small><strong>NOT EXECUTED</strong></div><div><small>AUDIT SHA-256</small><code id="decisionDigest">—</code></div></div></div>
-<p class="footnote">TrustGate AI v0.1 · No private keys · No payment execution · No persisted on-chain audit</p>
+<p class="footnote">TrustGate AI v0.3 · No private keys · No payment execution · No durable audit storage</p>
 </section>
 <section class="view" id="view-trail">
 <div class="eyebrow">LOCAL SESSION / AUDIT HISTORY</div>
@@ -47,7 +48,7 @@
 <section class="view" id="view-about">
 <div class="eyebrow">TRUST ARCHITECTURE / v0.1 PROTOTYPE</div>
 <div class="page-heading"><div><h1>Proof over<br><span>promises.</span></h1><p>Real registry endpoint, strict fail-closed policy and a clear boundary around work that has not yet been built.</p></div></div>
-<div class="architecture"><article class="panel"><b>01</b><h3>Registry identity</h3><p>Server-side fixed-origin check requires all Concordium verification flags, zero issues and no inactive status.</p><small>IMPLEMENTED · LIVE ENDPOINT UNVERIFIED</small></article><article class="panel"><b>02</b><h3>Policy engine</h3><p>Decimal-to-integer-cent validation, recipient allowlist, and thresholds for human review or denial.</p><small>IMPLEMENTED · TESTED</small></article><article class="panel"><b>03</b><h3>Audit export</h3><p>Each result includes policy version, reasons, verification metadata and SHA-256 digest.</p><small>IMPLEMENTED · SESSION ONLY</small></article><article class="panel"><b>04</b><h3>On-chain proof + x402</h3><p>Testnet agent registration, card hash, wallet-authorized payments and persistent audit evidence are pending.</p><small class="pending">NOT IMPLEMENTED</small></article></div>
+<div class="architecture"><article class="panel"><b>01</b><h3>Registry identity</h3><p>Server-side fixed-origin check requires all Concordium verification flags, zero issues and no inactive status.</p><small>IMPLEMENTED · AGENT #1323 VERIFIED</small></article><article class="panel"><b>02</b><h3>Policy engine</h3><p>Decimal-to-integer-cent validation, recipient allowlist, and thresholds for human review or denial.</p><small>IMPLEMENTED · TESTED</small></article><article class="panel"><b>03</b><h3>Audit export</h3><p>Each result includes policy version, reasons, verification metadata and SHA-256 digest.</p><small>IMPLEMENTED · SESSION ONLY</small></article><article class="panel"><b>04</b><h3>Signed public evidence</h3><p>Live Testnet badge #1323 and owner wallet signature protect a read-only on-chain evidence receipt. No x402 transfers or paid actions.</p><small>LIVE PROOF DEMO · X402 PENDING</small></article></div>
 <div class="panel links"><h3>Official resources</h3><a target="_blank" rel="noopener noreferrer" href="https://agent-registry.concordium.com/">Agent Registry ↗</a><a target="_blank" rel="noopener noreferrer" href="https://docs.concordium.com/en/mainnet/technical-reference/agent-registry/mcp-service.html">Registry API docs ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.encodeclub.com/programmes/concordium-trusted-agents-hackathon">Encode Club ↗</a></div>
 </section>
 </div></main></div></body></html>

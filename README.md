@@ -3,6 +3,7 @@
 **Verify before you authorize.** A Concordium CIS-8004 native agent identity + fail-closed deterministic payment-intent review prototype, built for the Concordium Trusted Agents Hackathon 2026.
 
 - Live demo: https://trustgate-ai.vercel.app/
+- **Live signed evidence flow:** https://trustgate-ai.vercel.app/live-proof
 - Agent #1323 metadata management: https://trustgate-ai.vercel.app/sign-agent
 - Source: https://github.com/bearbaba/TrustGate-AI
 - **On-chain proof:** [Successful Testnet setAgentURI transaction](https://ccdexplorer.io/testnet/transaction/93280aa5361967fc656e513e824c495c932c2abdc4cd7253bf3f2db35d90f4ee)
@@ -18,9 +19,23 @@ Read [the on-chain evidence and badge verification record](docs/ONCHAIN_EVIDENCE
 
 > **Prototype: no payment execution.** The app's `ALLOW` result is a deterministic policy decision, not permission granted to a wallet or a payment settlement. The site offers a single owner-controlled Testnet metadata update; it does not sign payments, transfer funds, implement x402 settlement, or persist audit records on-chain.
 
+## Live ownership-bound evidence flow (v0.3)
+
+The [Live Proof page](https://trustgate-ai.vercel.app/live-proof) demonstrates an end-to-end sequence:
+
+1. Connect the Concordium Testnet wallet that owns Agent #1323.
+2. Sign an intent-specific message with a fresh client nonce and 90-second validity window (**no gas**).
+3. The backend verifies the signature against the account's current on-chain signing keys via Concordium Testnet gRPC and calls the official CIS-8004 badge resolver.
+4. A deterministic policy evaluates the hypothetical USD amount. ALLOW returns a fresh public on-chain evidence receipt, REVIEW/BLOCK return no receipt.
+5. Export a local JSON receipt with a SHA-256 integrity digest.
+
+No amount is charged. The wallet's signature is limited to one **read-only public evidence request**, not a transaction, delegated authorization, durable access token, or x402 payment. Because the prototype has no durable nonce registry, the same signed request could be replayed during its short validity window: do not use this workflow to protect paid or write-sensitive actions. Adding replay protection and persistent audit storage is required before enabling actual services or funds.
+
+The authenticated service is deliberately **public/read-only**. It demonstrates a genuine wallet-ownership proof, fresh badge resolution and policy-gated evidence delivery, but does not claim a paid integration.
+
 ## Start locally
 
-Requires Node.js 22 and npm. The signer page uses an esbuild bundle.
+Requires Node.js 22 and npm. The signer and live proof pages use esbuild bundles. The proof backend requires outbound Concordium Testnet gRPC connectivity.
 
 ```sh
 npm install
@@ -34,6 +49,7 @@ npm run check
 ## API
 
 - `GET /api/verify?badge=BASE58TOKEN` checks a badge with Concordium's server-side resolver. Verification fails closed if a mandatory check is absent or registry is unavailable.
+- `POST /api/live-proof` accepts signed, time-bounded Testnet requests for Agent #1323 and returns a public evidence receipt only after signature, badge and policy checks.
 - `POST /api/evaluate` accepts JSON with `badge`, `amountUsd` (for example `"2.00"`), `recipient` and `purpose`. Returns `ALLOW`, `REVIEW` or `BLOCK`, with auditable reasons.
 
 Recipient allowlist: `research-api`, `evidence-oracle`, `audit-service`. Amounts below $5: `ALLOW` (policy only); $5–$10: `REVIEW`; above $10: `BLOCK`. Invalid inputs and unverified identities: `BLOCK`.

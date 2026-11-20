@@ -15,9 +15,11 @@
 - [x] Captured official `/v1/check-badge/JyP9UhV91L3jWGjHH4aB7` output: `badge_valid: true`, `checks.extension_conformant: true`, `checks.verification_present: true`, `checks.hash_matches_on_chain: true`, `issues: []`
 - [x] Confirmed Agent #1323 metadata URL in the official registry and its hash in the verifier response
 - [ ] Independently smoke-test deployed Decision Lab against live Agent #1323 (fixture-based regression checks added; runtime response still requires verification)
-- [ ] Implement concrete identity-bound service policy demo and show its actual security boundary
+- [x] Added signed public evidence demo with owner wallet signature and policy-gated on-chain receipt (no payment)
+- [ ] Test full signed proof flow with owner wallet on Vercel against live Testnet gRPC
+- [x] Implement identity-bound *read-only public* service policy demo and document replay/financial security boundaries
 - [ ] Implement meaningful end-to-end x402 test payment only if safely feasible; otherwise disclose it as planned, not shipped
-- [ ] Add durable, tamper-evident server-side audit and replay/idempotency safeguards if enabling real money flows
+- [ ] Add durable audit, replay/idempotency protection, rate limits and server-side persistent challenge store **before** enabling paid or write-sensitive flows
 - [ ] Review frontend with screenshots/responsive checks, error handling, and deployed endpoints
 - [ ] Prepare 3-minute hackathon video, proof links, public source, and go-live plan
 - [ ] Complete Encode Club registration and submit before official deadline
