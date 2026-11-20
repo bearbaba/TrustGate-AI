@@ -1,0 +1,44 @@
+{
+  "name": "TrustGate AI",
+  "description": "Fail-closed identity verification and deterministic payment-intent policy review for autonomous agents. The service checks CIS-8004 Concordium badge verification results, validates recipient allowlists and request limits, then returns an explainable ALLOW, REVIEW or BLOCK decision. Prototype only: no autonomous wallet signing, transfers or x402 payment execution.",
+  "version": "0.1.0",
+  "url": "https://trustgate-ai.vercel.app/.well-known/agent-card.json",
+  "provider": {
+    "organization": "TrustGate AI",
+    "url": "https://trustgate-ai.vercel.app"
+  },
+  "documentationUrl": "https://github.com/bearbaba/TrustGate-AI",
+  "skills": [
+    {
+      "id": "verify-agent-identity",
+      "name": "Verify agent identity",
+      "description": "Check a Concordium CIS-8004 agent badge through the official server-side registry endpoint before evaluating intents.",
+      "tags": [
+        "concordium",
+        "cis-8004",
+        "agent-identity",
+        "security"
+      ]
+    },
+    {
+      "id": "evaluate-payment-intent",
+      "name": "Evaluate payment intent",
+      "description": "Deterministically return ALLOW, REVIEW or BLOCK according to identity verification, allowlisted recipient, purpose and per-request USD amount; no payment is executed.",
+      "tags": [
+        "policy",
+        "payments",
+        "allow-review-block",
+        "audit"
+      ]
+    }
+  ],
+  "concordium": {
+    "chain_id": "concordium:testnet",
+    "token_address": null,
+    "owner": "34C1ozW8edKtBmA8FUFoR4aBys8ofuwtRmYqqbzNVPAsATT4wk",
+    "services": {
+      "verifyIdentity": "https://trustgate-ai.vercel.app/api/verify",
+      "evaluateIntent": "https://trustgate-ai.vercel.app/api/evaluate"
+    }
+  }
+}
