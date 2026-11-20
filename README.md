@@ -15,7 +15,7 @@
 
 The owner wallet signed an update to `CIS-8004.setAgentURI` on Testnet registry `<12802,0>`, setting both the Agent Card URL and its SHA-256. CCDExplorer reports **Account Transaction Success** and `CIS-8004.uri_updated` at block **51,056,295**. The official check-badge response was subsequently captured: badge_valid=true, checks.extension_conformant=true, checks.verification_present=true, checks.hash_matches_on_chain=true, and issues=[]. The on-chain badge and card integrity are now verified.
 
-Read [the on-chain evidence and badge verification record](docs/ONCHAIN_EVIDENCE.md) for transaction hash, scope and verification command.
+Read [the on-chain evidence and badge verification record](docs/ONCHAIN_EVIDENCE.md) for transaction hash, scope and verification command. A separate [Live Proof evidence log](docs/LIVE_PROOF_EVIDENCE.md) records successful v0.3 and v0.4 owner-wallet tests, including the v0.4 five-check receipt re-verification.
 
 > **Prototype: no payment execution.** The app's `ALLOW` result is a deterministic policy decision, not permission granted to a wallet or a payment settlement. The site offers a single owner-controlled Testnet metadata update; it does not sign payments, transfer funds, implement x402 settlement, or persist audit records on-chain.
 
@@ -67,7 +67,7 @@ Expected hash: `ed33956577d378ef0bfd537505863d846a2c130513302a2d45d99e5bfc009c44
 
 ## Roadmap and submission
 
-See [docs/ROADMAP.md](docs/ROADMAP.md). The hackathon requires a public repository, demo evidence, and a short video. Check the current programme's deadlines and eligibility before submission.
+See [docs/ROADMAP.md](docs/ROADMAP.md) and [the silent demo storyboard](docs/DEMO_STORYBOARD.md). The hackathon requires a public repository, demo evidence, and a short video. Check the current programme's deadlines and eligibility before submission.
 
 - Official reference: https://docs.concordium.com/en/mainnet/technical-reference/agent-registry/mcp-service.html
 - Programme: https://www.concordium.com/article/concordium-trusted-agents-hackathon-encode-club
