@@ -20,11 +20,12 @@
 <div class="panel live-panel">
 <details class="receipt-details">
 <summary>04 / Verify a downloaded receipt</summary>
-<p>Upload a receipt issued by the new v0.4 flow. TrustGate will recompute its checksum, verify the owner's actual wallet signature against Testnet credentials, and recheck the <em>current</em> on-chain Agent Card.</p>
+<p>Upload a v0.5 receipt for the full policy witness check. v0.4 receipts remain supported as legacy proofs. TrustGate will recompute the policy decision and digest, verify the owner's real wallet signature against Testnet credentials, and recheck the <em>current</em> on-chain Agent Card.</p>
 <div class="receipt-tools"><input id="receipt-file" type="file" accept="application/json,.json" aria-label="Choose a TrustGate receipt"><button class="outline" id="verify-receipt" type="button">Verify receipt</button></div>
 <div class="status" id="receipt-status" role="status">No receipt selected.</div>
 <pre id="receipt-verification"></pre>
 <p><small>A SHA-256 checksum alone is not proof of who issued a receipt. This check verifies the signed owner request and the <strong>current</strong> registry state, not historical server issuance time, guaranteed non-replay or any payment.</small></p>
 </details></div>
+<div class="panel live-panel"><div class="block-header"><div><small>05 / SECURITY</small><h2>Adversarial Verification Lab</h2></div><a href="/security-lab" class="outline">Run Attack Lab ↗</a></div><p>Try to forge an ALLOW decision, corrupt the owner signature or substitute on-chain metadata. The lab recomputes checksums after tampering so failures cannot be attributed to a simple SHA-256 mismatch.</p></div>
 <div class="live-footer">Security boundary: the result is a public, read-only snapshot. No payment settlement, x402 charge, replay-resistant service token, server-signed timestamp, or durable audit storage is implemented. Nonces expire after 90 seconds, but this stateless public demo does not provide durable replay prevention.</div>
 </main></body></html>

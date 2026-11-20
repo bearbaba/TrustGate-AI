@@ -19,6 +19,8 @@
 - [x] Owner confirmed full signed proof flow via Vercel: wallet signature, verified Agent #1323, policy ALLOW, JSON receipt issued at 2026-11-20T11:02:48.626Z (v0.3)
 - [x] v0.4 Live Proof ALLOW + downloaded receipt re-verification on Production with owner wallet; five checks passed, 2026-11-20T11:11:39.084Z
 - [ ] Owner-wallet Production checks for REVIEW ($6.00) and BLOCK ($12.00), with no receipt issued
+- [x] Built a reproducible Policy Witness and an adversarial receipt verification lab (pending owner-wallet Production smoke test)
+- [ ] Validate the v0.5 Policy Witness + Attack Lab with a fresh live signed receipt
 - [x] Implement identity-bound *read-only public* service policy demo and document replay/financial security boundaries
 - [ ] Implement meaningful end-to-end x402 test payment only if safely feasible; otherwise disclose it as planned, not shipped
 - [ ] Add durable audit, replay/idempotency protection, rate limits and server-side persistent challenge store **before** enabling paid or write-sensitive flows

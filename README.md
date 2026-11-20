@@ -4,6 +4,7 @@
 
 - Live demo: https://trustgate-ai.vercel.app/
 - **Live signed evidence flow:** https://trustgate-ai.vercel.app/live-proof
+- **Adversarial Security Lab:** https://trustgate-ai.vercel.app/security-lab
 - Agent #1323 metadata management: https://trustgate-ai.vercel.app/sign-agent
 - Source: https://github.com/bearbaba/TrustGate-AI
 - **On-chain proof:** [Successful Testnet setAgentURI transaction](https://ccdexplorer.io/testnet/transaction/93280aa5361967fc656e513e824c495c932c2abdc4cd7253bf3f2db35d90f4ee)
@@ -19,7 +20,7 @@ Read [the on-chain evidence and badge verification record](docs/ONCHAIN_EVIDENCE
 
 > **Prototype: no payment execution.** The app's `ALLOW` result is a deterministic policy decision, not permission granted to a wallet or a payment settlement. The site offers a single owner-controlled Testnet metadata update; it does not sign payments, transfer funds, implement x402 settlement, or persist audit records on-chain.
 
-## Live ownership-bound evidence flow (v0.4)
+## Live ownership-bound evidence flow (v0.5)
 
 The [Live Proof page](https://trustgate-ai.vercel.app/live-proof) demonstrates an end-to-end sequence:
 
@@ -27,9 +28,11 @@ The [Live Proof page](https://trustgate-ai.vercel.app/live-proof) demonstrates a
 2. Sign an intent-specific message with a fresh client nonce and 90-second validity window (**no gas**).
 3. The backend verifies the signature against the account's current on-chain signing keys via Concordium Testnet gRPC and calls the official CIS-8004 badge resolver.
 4. A deterministic policy evaluates the hypothetical USD amount. ALLOW returns a fresh public on-chain evidence receipt, REVIEW/BLOCK return no receipt.
-5. Export a JSON receipt containing the owner-signed request and SHA-256 integrity digest; the **Verify Receipt** panel can recompute the digest, verify the signature against Testnet credentials, and compare against **current** registry state. A prior v0.3 receipt without the signed request cannot be independently verified.
+5. Export a **v0.5 Policy Witness** receipt containing the owner-signed request, independently reproducible policy manifest fingerprint and decision, plus a SHA-256 digest. The Verify Receipt panel recalculates policy, signature and current registry checks. v0.4 receipts remain supported as **legacy owner-signature proofs** without policy-witness validation. A prior v0.3 receipt without the signed request cannot be independently verified.
 
 For REVIEW and BLOCK, the wallet and badge are still verified before returning the policy result; no evidence receipt is issued. No amount is charged. The wallet's signature is limited to one **read-only public evidence request**, not a transaction, delegated authorization, durable access token, or x402 payment. Because the prototype has no durable nonce registry, the same signed request could be replayed during its short validity window: do not use this workflow to protect paid or write-sensitive actions. Adding replay protection and persistent audit storage is required before enabling actual services or funds.
+
+**Reproducible policy evidence:** The [Policy Witness specification](docs/POLICY_WITNESS.md) explains why a hash alone does not stop forged JSON, how verifier policy re-execution works, and what the [Attack Lab](https://trustgate-ai.vercel.app/security-lab) can demonstrate. Even with a valid witness, a backend-signed historical decision and durable nonce protection are NOT implemented.
 
 The authenticated service is deliberately **public/read-only**. It demonstrates a genuine wallet-ownership proof, fresh badge resolution and policy-gated evidence delivery, but does not claim a paid integration.
 
@@ -50,7 +53,7 @@ npm run check
 
 - `GET /api/verify?badge=BASE58TOKEN` checks a badge with Concordium's server-side resolver. Verification fails closed if a mandatory check is absent or registry is unavailable.
 - `POST /api/live-proof` accepts signed, time-bounded Testnet requests for Agent #1323 and returns a public evidence receipt only after signature, badge and policy checks.
-- `POST /api/verify-receipt` checks v0.4 receipt SHA-256, the actual signed owner request, and the **current** on-chain badge. This is not a server-signed historical timestamp or authorization token.
+- `POST /api/verify-receipt` checks v0.5 receipt SHA-256, **recomputed policy witness**, owner-signed request and the current badge. v0.4 legacy receipts can verify owner signature and current badge without policy witness. This is not a server-signed historical timestamp or authorization token.
 - `POST /api/evaluate` accepts JSON with `badge`, `amountUsd` (for example `"2.00"`), `recipient` and `purpose`. Returns `ALLOW`, `REVIEW` or `BLOCK`, with auditable reasons.
 
 Recipient allowlist: `research-api`, `evidence-oracle`, `audit-service`. Amounts below $5: `ALLOW` (policy only); $5–$10: `REVIEW`; above $10: `BLOCK`. Invalid inputs and unverified identities: `BLOCK`.

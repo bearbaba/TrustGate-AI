@@ -39,12 +39,15 @@ test('canonical SHA-256 digest does not depend on JSON key order',()=>{
 });
 test('v0.4 receipt contains the signed message and verifies against live owner and registry',async()=>{
   const receipt=await fixtureReceipt();
-  assert.equal(receipt.version,'trustgate-public-receipt/v1');
+  assert.equal(receipt.version,'trustgate-public-receipt/v2');
+  assert.equal(receipt.policyWitness.decision,'ALLOW');
   assert.equal(receipt.proof.request.nonce,request().nonce);
   assert.equal(receipt.proof.ownerSignature[0][0].length,128);
   const result=await verifyEvidenceReceipt(receipt,deps);
   assert.equal(result.ok,true);
   assert.equal(result.checks.ownerSignature,true);
+  assert.equal(result.checks.policyWitness,true);
+  assert.equal(result.code,'SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED');
   assert.equal(result.checks.currentRegistry,true);
 });
 test('receipt checksum mismatch and tampering fail closed',async()=>{

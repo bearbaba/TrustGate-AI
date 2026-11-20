@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#08161f"><meta name="description" content="TrustGate AI Adversarial Security Lab — challenge verifiable agent policy receipts.">
+<title>TrustGate AI — Adversarial Security Lab</title>
+<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/security-lab.css">
+<script src="/security-lab.js" defer></script></head>
+<body><main class="lab-wrap">
+<a class="back" href="/">← TrustGate AI / Decision Lab</a>
+<div class="eyebrow">PROOF, NOT PROMISES · ADVERSARIAL VALIDATION</div>
+<h1>Don't trust the verdict.<br><span>Attack the proof.</span></h1>
+<p class="lab-lead">A verifiable Agent #1323 receipt should survive independent inspection and reject forgery. Upload a receipt from Live Proof v0.5, then try to corrupt its policy, signature or metadata. Every attack recalculates its JSON SHA-256 before verification.</p>
+<div class="lab-bits"><span>CONCORDIUM TESTNET</span><span>EXECUTABLE POLICY WITNESS</span><span>READ-ONLY</span><span>NO PAYMENTS</span></div>
+<section class="panel lab-panel">
+<div class="lab-top"><div><small>01 / LOAD EVIDENCE</small><h2>Start with a real signed receipt</h2></div><a href="/live-proof" class="outline">Get live receipt ↗</a></div>
+<label for="receipt-input">Upload exported v0.5 Live Proof JSON</label>
+<input id="receipt-input" type="file" accept=".json,application/json">
+<div class="lab-file"><span id="receipt-name">No file selected</span><code id="receipt-hash">—</code></div>
+<p>Receipt bytes stay in your browser until you click a test. Each test sends one receipt to the TrustGate verification API; private keys and recovery phrases are never requested.</p>
+</section>
+<section class="panel lab-panel">
+<div class="lab-top"><div><small>02 / REAL VERIFICATION TESTS</small><h2>Four scenarios</h2></div><span class="lab-note">One request per click</span></div>
+<div class="attack-grid">
+<div class="attack-case"><strong>00 · Original</strong><p>Independently confirm the unchanged signed owner request, reproducible policy and current on-chain card.</p><button type="button" data-scenario="original" class="outline" disabled>Verify original ↗</button></div>
+<div class="attack-case"><strong>01 · Fake policy</strong><p>Change ALLOW into BLOCK and recompute SHA-256. The policy witness must reject the forged decision.</p><button type="button" data-scenario="policy" class="outline" disabled>Forge policy ↗</button></div>
+<div class="attack-case"><strong>02 · Fake signature</strong><p>Change the wallet signature and recompute SHA-256. On-chain credential verification must fail.</p><button type="button" data-scenario="signature" class="outline" disabled>Forge signature ↗</button></div>
+<div class="attack-case"><strong>03 · Fake metadata</strong><p>Replace the card SHA-256 and recompute receipt SHA-256. The Concordium hash comparison must fail.</p><button type="button" data-scenario="metadata" class="outline" disabled>Forge metadata ↗</button></div>
+</div>
+<div class="status" id="lab-status" role="status" aria-live="polite">Choose a v0.5 Live Proof receipt to begin.</div>
+</section>
+<section class="panel lab-panel">
+<div class="lab-top"><div><small>03 / ATTACK RESULTS</small><h2>Observed outcomes</h2></div></div>
+<div id="results" class="attack-results"><p class="muted">Each test reports the actual API result. A failed network request is never counted as a security success.</p></div>
+</section>
+<div class="lab-footer"><b>Security boundaries</b><p>The integrity digest by itself does not establish provenance. This lab validates an owner-signed intent, re-executes the current deterministic policy and checks current Concordium metadata. It does not establish historical server attestation, durable replay prevention, actual x402 payment, or security against an attacker who controls the verifier. For funds or private data, use a separately audited authorization and nonce store.</p>
+<a href="https://github.com/bearbaba/TrustGate-AI/blob/main/docs/POLICY_WITNESS.md" target="_blank" rel="noopener noreferrer">Read the verification model ↗</a></div>
+</main></body></html>
