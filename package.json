@@ -1,14 +1,24 @@
 {
   "name": "trustgate-ai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Fail-closed Concordium agent identity and payment-intent policy review prototype",
-  "engines": { "node": ">=20" },
+  "description": "Concordium agent identity and deterministic payment intent prototype",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "node server.js",
     "test": "node --test tests/*.test.js",
-    "check": "node --check server.js && node --check lib/concordium.js && node --check lib/engine.js && node --check api/verify.js && node --check api/evaluate.js"
+    "check": "node --check server.js && node --check lib/concordium.js && node --check lib/engine.js && node --check api/verify.js && node --check api/evaluate.js && node --check src/sign-agent.js",
+    "build": "esbuild src/sign-agent.js --bundle --format=iife --platform=browser --target=es2020 --outfile=public/sign-agent.js"
+  },
+  "dependencies": {
+    "@concordium/web-sdk": "12.0.3",
+    "@concordium/browser-wallet-api-helpers": "3.3.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.9"
   },
   "license": "MIT"
 }

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#08161f">
+<title>TrustGate AI — Ký cập nhật Agent #1323</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/sign-agent.css">
+<script defer src="/sign-agent.js"></script>
+</head><body><main class="sign-wrap">
+<a href="/" class="back">← TrustGate AI / Decision Lab</a>
+<div class="eyebrow">CONCORDIUM TESTNET · CIS-8004</div>
+<h1>Liên kết <span>Agent #1323</span></h1>
+<p class="lead">Trang này dành riêng cho chủ sở hữu Agent #1323 để cập nhật Metadata URL và SHA-256. Không thu khóa riêng, không chuyển CCD vào contract và chỉ ký sau khi kiểm tra dữ liệu.</p>
+<div class="pill-inline">Testnet only · Wallet approval required</div>
+<div class="panel sign-card">
+<h2>Thông tin giao dịch cố định</h2>
+<dl>
+<dt>Contract</dt><dd>&lt;12802,0&gt; · CIS-8004.setAgentURI</dd>
+<dt>Agent</dt><dd>#1323 · JyP9UhV91L3jWGjHH4aB7</dd>
+<dt>Ví chủ sở hữu</dt><dd id="wallet-info"></dd>
+<dt>Metadata URL</dt><dd id="uri-info"></dd>
+<dt>SHA-256</dt><dd id="hash-info"></dd>
+<dt>Giới hạn Energy</dt><dd>30,000 (test CCD gas)</dd>
+<dt>CCD chuyển vào contract</dt><dd>0 CCD (không gồm phí gas mạng)</dd>
+</dl>
+</div>
+<div class="panel sign-card">
+<h2>Kết nối và xác minh</h2>
+<p>Nhấn kiểm tra. Ví sẽ yêu cầu kết nối tài khoản, rồi ứng dụng xác nhận mạng và mã hóa tham số với schema on-chain trước khi bật ký.</p>
+<div class="sign-actions">
+<button type="button" class="outline" id="check">1 · Kết nối và kiểm tra</button>
+<button type="button" class="primary" id="sign" disabled>2 · Ký bằng Concordium Wallet</button>
+</div>
+<div class="status" id="status" role="status" aria-live="polite">Chưa kết nối ví. Bắt đầu bằng bước 1.</div>
+<p class="subdued">Tài khoản kết nối: <code id="account">Chưa kết nối</code></p>
+</div>
+<div class="panel sign-card" id="tx-panel" hidden>
+<h2>Giao dịch đã gửi</h2>
+<p>Đã nhận được transaction hash, nhưng cần chờ FINALIZED và đối chiếu với registry mới coi là thành công.</p>
+<code id="tx"></code>
+<p><a id="explorer" target="_blank" rel="noopener noreferrer">Mở transaction trên CCDExplorer ↗</a></p>
+</div>
+<div class="panel sign-card">
+<h2>Kiểm tra sau giao dịch</h2>
+<button type="button" class="outline" id="verify">Kiểm tra Agent Badge</button>
+<pre id="result">Chưa kiểm tra.</pre>
+</div>
+<p class="footnote">Không bao giờ cung cấp recovery phrase, private key hoặc file xuất ví cho trang web. Nếu màn hình ví hiển thị Mainnet hay contract khác, hãy từ chối.</p>
+</main></body></html>

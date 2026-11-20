@@ -1,12 +1,22 @@
 {
   "version": 2,
   "framework": null,
+  "buildCommand": "npm run build",
   "outputDirectory": "public",
   "cleanUrls": true,
   "headers": [
-    { "source": "/api/(.*)", "headers": [
-      { "key": "Cache-Control", "value": "no-store" },
-      { "key": "X-Content-Type-Options", "value": "nosniff" }
-    ] }
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
   ]
 }
