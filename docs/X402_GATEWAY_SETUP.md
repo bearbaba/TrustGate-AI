@@ -4,6 +4,26 @@
 
 The gateway uses the official `@x402/core@2.31.0` and `@x402/concordium@2.31.0` packages for the Concordium `exact` scheme. It is intentionally disabled on the public deployment until all necessary Testnet configuration exists. It must not be presented as real payment settlement before a transaction is verified.
 
+## Browser wallet payment path (native Concordium, not x402 exact)
+
+The current Concordium Wallet for Web implements `sendSponsoredTransaction(sender, sponsorSignedTransaction)`, in which the **Sponsor signs the V1 transaction first** and then the **owner's browser wallet reviews, co-signs and submits** it. This is the officially documented wallet protocol, but is not interchangeable with the **sender-first** `@x402/concordium/exact/client` `PAYMENT-SIGNATURE` protocol used by the existing HTTP resource.
+
+TrustGate now includes a **separate opt-in native sponsored checkout**, visibly labeled as such on `/x402-gateway`:
+
+1. The browser first reads `/api/x402/status` and `/api/sponsor/accounts`. Any locked Gateway, missing funded Sponsor or unverified signing authority stops **before connecting a wallet**.
+2. The owner wallet for Agent #1323 connects on Testnet and signs a new 90-second, merchant-bound **non-payment access intent**. This access signature never moves CCD.
+3. `POST /api/x402/browser-prepare` verifies the signed access intent and live badge, checks Sponsor account funding and on-chain Ed25519 signing authority and verifies the owner has at least 100000 microCCD available. All first-party Sponsor and Gateway flags must be enabled.
+4. A global Redis Lua quota allows **at most two preparation attempts per minute and four per UTC day**. Another atomic Redis reservation locks the specific owner-intent nonce before issuing the Sponsor-signed transaction. If preparation fails ambiguously, its reservation stays locked.
+5. The server creates a *fixed* V1 `Transaction.transfer` for **100000 microCCD**, from Agent #1323 owner to the configured Merchant, with Sponsor paying network fees. Only the Sponsor portion is signed on the server. No keys appear in the response.
+6. The owner independently reviews and authorizes the transaction through `provider.sendSponsoredTransaction(...)` in Concordium Wallet; the wallet submits it and returns a transaction hash. TrustGate never claims finalization solely from a browser-returned hash.
+7. `GET /api/x402/browser-inspect?hash=<64-hex>` performs a **read-only, rate-limited** independent finalized transaction scope check (owner, recipient, amount, Sponsor and hash), even when the checkout is later locked. The result `verified=true` proves only a matching on-chain transfer, **not** that a particular prior browser session received a paid x402 resource or that the payment cannot be replayed across sessions.
+
+**Operational blocker:** The Sponsor key is **not yet present** in Vercel Production. The browser cannot prepare a transfer until the operator privately configures a correct Sponsor Ed25519 seed and strong API bearer token in Vercel encrypted environment variables and then intentionally enables Testnet flags. Do not put those credentials in chat, a file upload, a GitHub commit or a wallet connection dialog. The Testnet-funded Sponsor public account is not equivalent to private-key custody. Avoid enabling with more CCD than necessary.
+
+**Remaining x402 exact gap:** Native wallet-sponsored settlement is a real CCD transfer possibility but **does not** send the SDK's sender-first `PAYMENT-SIGNATURE` to `/api/x402/resource`; paid-resource delivery remains disabled until a compatible verified bridge is built. No live transfer or paid response was observed at the time of writing. The new path uses public on-chain inspection, not a completed payable access token. Never label this as fully x402-compliant.
+
+Reference: [official Concordium browser wallet sponsored transaction guide](https://docs.concordium.com/en/mainnet/tutorials/protocol-level-sponsored-transactions/create-a-sponsored-transaction.html), and [Sponsor backend guide](https://docs.concordium.com/en/mainnet/tutorials/protocol-level-sponsored-transactions/set-up-a-sponsor-service.html).
+
 ## Actual Concordium sponsored-transaction protocol
 
 According to the [official x402 Concordium README](https://github.com/x402-foundation/x402/blob/main/typescript/packages/mechanisms/concordium/README.md), the client signs a V1 sponsored transaction, the facilitator verifies nine rules and signs as sponsor, then settles/finalizes on Concordium Testnet. The client **does not broadcast** directly. An ordinary wallet `signMessage` request proves identity, **not** transaction authorization.
