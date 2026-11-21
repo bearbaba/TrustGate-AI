@@ -57,6 +57,12 @@ The third **public Sponsor Testnet account** is configured in Vercel Production 
 
 Read [the sponsor configuration and acceptance criteria](docs/X402_GATEWAY_SETUP.md).
 
+### Read-only owner wallet challenge inspection (v0.8 follow-up)
+
+The `/x402-gateway` page includes an owner-only **HTTP 402 preflight**. When configured, it uses the official Concordium browser wallet to sign the exact scoped access intent and requests the real server-generated payment challenge. The client checks network, merchant, 0.1 Testnet CCD, announced sponsor and protocol-header consistency. The page never generates `PAYMENT-SIGNATURE`, asks for a wallet private key, or submits a transaction. While the gateway remains disabled, this inspection stops before a wallet signature is requested. This is **not** a completed CCD payment client.
+
+The first-party Sponsor adds a separate **eight settlement-call UTC daily cap** atomically enforced in Upstash Redis, in addition to minute quotas. It bounds the number of signing attempts, **not** the CCD fee amount; the sponsor must remain disabled pending funds, key custody, monitoring, reconciliation and a compatible owner-controlled payment signer. See [setup and verification steps](docs/X402_GATEWAY_SETUP.md).
+
 ## Production path: real x402 settlement
 
 A genuine Concordium x402 flow has **not** been completed or verified with a real Testnet payment. The official `@x402/concordium` package supports client, server and facilitator components; however, TrustGate cannot claim agent payments or payment authorization without an actual Testnet settlement to a separate receiving account and a verifiable transaction receipt. The [x402 integration checklist](docs/X402_INTEGRATION_PLAN.md) records the necessary steps and strict acceptance criteria.
