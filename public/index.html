@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#07161c">
-<meta name="description" content="TrustGate AI: verified Concordium agent identity and deterministic payment-intent security.">
-<title>TrustGate AI — Verify before you authorize</title>
+<meta name="description" content="TrustGate AI: Concordium on-chain agent identity, owner-signed Live Proof, deterministic policies and a safety-locked Testnet x402 gateway.">
+<title>TrustGate AI — Identity, Policy & Verifiable Evidence</title>
 <link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script>
 </head>
 <body>
@@ -18,20 +18,24 @@
 <a href="/security-lab" class="nav">◇ &nbsp; Attack Lab</a><a href="/x402-gateway" class="nav">◆ &nbsp; x402 Testnet</a><button class="nav" data-view="trail" type="button">◷ &nbsp; Audit Trail</button>
 <button class="nav" data-view="about" type="button">◎ &nbsp; Architecture</button>
 </nav>
-<div class="side-note"><span class="dot"></span> PROTOTYPE MODE<p>Agent badge checks are live where reachable. Payments are never executed.</p><a href="https://www.concordium.com/article/concordium-trusted-agents-hackathon-encode-club" target="_blank" rel="noopener noreferrer">Concordium programme ↗</a></div>
+<div class="side-note"><span class="dot"></span> TESTNET · GUARDED MODE<p>Registry checks and owner-signed public evidence are live. x402 settlement stays locked until its safety prerequisites pass.</p><a href="https://www.concordium.com/article/concordium-trusted-agents-hackathon-encode-club" target="_blank" rel="noopener noreferrer">Concordium programme ↗</a></div>
 </aside>
 <main>
-<header class="topbar"><div>TRUSTGATE / <span id="crumb">DECISION LAB</span></div><div class="pill"><span class="dot"></span> Policy review only</div></header>
+<header class="topbar"><div>TRUSTGATE / <span id="crumb">DECISION LAB</span></div><div class="pill" id="homePaymentStatus" role="status" aria-live="polite"><span class="dot"></span> x402 · checking status</div></header>
 <div class="content">
 <section class="view active" id="view-lab">
 <div class="eyebrow">IDENTITY · POLICY · ACCOUNTABILITY</div>
-<div class="hero"><div><h1>Trust first.<br><span>Then act.</span></h1><p>Verify AI agents using Concordium's on-chain registry, then review what each agent wants to do under a deterministic payment policy.</p></div><div class="hero-art" aria-hidden="true"><div>◇</div><small>VERIFY IDENTITY<br>ENFORCE POLICY</small></div></div>
-<div class="stats"><div><small>IDENTITY SOURCE</small><strong>Concordium</strong><span>Official badge resolver</span></div><div><small>POLICY MODE</small><strong>Fail-closed</strong><span>Deny unverified agents</span></div><div><small>EXECUTION</small><strong>Disabled</strong><span>No wallets or payments</span></div><div><small>POLICY</small><strong>v0.1</strong><span>Deterministic review</span></div></div>
-<div class="panel" style="margin-bottom:24px;padding:18px;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap"><div><strong style="color:var(--mint)">NEW · Live signed evidence flow</strong><div style="color:var(--muted);font-size:12px">Verified Agent #1323 + wallet ownership signature + policy-gated public proof</div></div><a class="primary" href="/live-proof">Open Live Proof ↗</a></div>
+<div class="hero"><div><h1>Trust first.<br><span>Then act.</span></h1><p>Check Concordium's on-chain agent registry, verify owner-signed public evidence and evaluate proposed payments against a deterministic, fail-closed policy. A policy ALLOW is never a transfer authorization.</p></div><div class="hero-art" aria-hidden="true"><div>◇</div><small>VERIFY IDENTITY<br>ENFORCE POLICY</small></div></div>
+<div class="stats"><div><small>ON-CHAIN IDENTITY</small><strong>Agent #1323</strong><span>Concordium CIS-8004</span></div><div><small>POLICY ENGINE</small><strong>Fail-closed</strong><span>v0.1 · ALLOW / REVIEW / BLOCK</span></div><div><small>LIVE EVIDENCE</small><strong>Wallet-signed</strong><span>Read-only owner proof</span></div><div><small>X402 TESTNET</small><strong id="homeGatewayLabel">Checking…</strong><span id="homeGatewayDetail">Settlement readiness, not a payment</span></div></div>
+<div class="feature-strip" aria-label="Explore TrustGate workflows">
+<a class="feature-link panel" href="/live-proof"><small>LIVE PROOF</small><strong>Verify wallet ownership</strong><span>Agent #1323 · signed public receipt · no transfer</span></a>
+<a class="feature-link panel" href="/security-lab"><small>ATTACK LAB</small><strong>Test tamper resistance</strong><span>Try forged receipts against the independent verifier</span></a>
+<a class="feature-link panel" href="/x402-gateway"><small>X402 TESTNET</small><strong>Inspect payment readiness</strong><span>Merchant, Sponsor and on-chain checks · settlement gated</span></a>
+</div>
 <div class="section-title"><span>01 / VERIFICATION</span><h2>Verify the agent</h2><p>Enter a CIS-8004 badge (Base58Check token address or CAIP-19 form). The backend queries Concordium's official resolver.</p></div>
 <div class="panel verify-form"><div class="grow"><label for="badge">Concordium Agent Badge</label><input id="badge" name="badge" autocomplete="off" spellcheck="false" value="JyP9UhV91L3jWGjHH4aB7" placeholder="JyP9... or ccd:.../cis-2:..." aria-describedby="badge-note"><small id="badge-note">No pasted credential is automatically trusted. A fresh check is required for each evaluation.</small></div><button class="primary" id="verifyBtn" type="button">Verify identity ↗</button></div>
 <div class="status" id="verifyStatus" role="status" aria-live="polite"><b id="verifyHeading">Awaiting verification</b><p id="verifyText">Provide a badge and run the official check.</p></div>
-<div class="section-title next"><span>02 / POLICY DECISION</span><h2>Review a payment intent</h2><p>Identify the requesting agent, recipient and amount. Approval here is NOT execution.</p></div>
+<div class="section-title next"><span>02 / POLICY DECISION</span><h2>Review a payment intent</h2><p>Review a proposed USD-denominated spend under policy v0.1. ALLOW means policy approval only; this Decision Lab does not initiate a wallet transaction.</p></div>
 <form id="evaluateForm" class="panel form-grid">
 <div><label for="service">Target service</label><select id="service"><option value="research-api">Research API</option><option value="evidence-oracle">Evidence Oracle</option><option value="audit-service">Audit Service</option><option value="unapproved-service">Unapproved service (test block)</option></select></div>
 <div><label for="amount">Proposed amount (USD)</label><input id="amount" name="amount" value="2.00" inputmode="decimal" required></div>
@@ -39,17 +43,17 @@
 <div class="form-action full"><small>Policy: under $5 ALLOW · $5–$10 REVIEW · above $10 BLOCK. Listed recipients only.</small><button id="evaluateBtn" class="primary" type="submit">Evaluate request ↗</button></div>
 </form>
 <div class="decision panel" id="decisionPanel" hidden><div class="decision-head"><span id="decisionBadge" class="verdict">—</span><div><h3 id="decisionHeading">No decision</h3><p id="decisionExplanation"></p></div></div><div class="decision-meta"><div><small>IDENTITY</small><strong id="decisionIdentity">—</strong></div><div><small>EXECUTION</small><strong>NOT EXECUTED</strong></div><div><small>AUDIT SHA-256</small><code id="decisionDigest">—</code></div></div></div>
-<p class="footnote">TrustGate AI v0.7 · No private keys · No payment execution · No durable audit storage</p>
+<p class="footnote">TrustGate AI v0.8 · Decision Lab is read-only · Session audit records are browser-only · Dedicated Redis protects x402 replays, not a permanent audit ledger</p>
 </section>
 <section class="view" id="view-trail">
 <div class="eyebrow">LOCAL SESSION / AUDIT HISTORY</div>
-<div class="page-heading"><div><h1>Every decision.<br><span>Accounted for.</span></h1><p>Export JSON records with verification results, policy reasons and SHA-256 checksums. This is browser-tab history, NOT a durable blockchain ledger.</p></div><button id="exportBtn" type="button" class="outline">Export JSON ↓</button></div>
+<div class="page-heading"><div><h1>Every decision.<br><span>Accounted for.</span></h1><p>Export decisions with verification results, policy reasons and SHA-256 digests. This Decision Lab keeps only browser-tab history; the separate x402 Redis replay store is not a permanent audit ledger.</p></div><button id="exportBtn" type="button" class="outline">Export JSON ↓</button></div>
 <div class="panel trail"><div class="trail-head"><strong>RECENT EVALUATIONS</strong><span id="trailCount">0 records</span></div><div id="trailList" class="trail-list"><div class="empty">No evaluations yet. Use Decision Lab to generate a record.</div></div></div>
 </section>
 <section class="view" id="view-about">
-<div class="eyebrow">TRUST ARCHITECTURE / v0.7 TESTNET</div>
-<div class="page-heading"><div><h1>Proof over<br><span>promises.</span></h1><p>Real registry endpoint, strict fail-closed policy and a clear boundary around work that has not yet been built.</p></div></div>
-<div class="architecture"><article class="panel"><b>01</b><h3>Registry identity</h3><p>Server-side fixed-origin check requires all Concordium verification flags, zero issues and no inactive status.</p><small>IMPLEMENTED · AGENT #1323 VERIFIED</small></article><article class="panel"><b>02</b><h3>Policy engine</h3><p>Decimal-to-integer-cent validation, recipient allowlist, and thresholds for human review or denial.</p><small>IMPLEMENTED · TESTED</small></article><article class="panel"><b>03</b><h3>Audit export</h3><p>Each result includes policy version, reasons, verification metadata and SHA-256 digest.</p><small>IMPLEMENTED · SESSION ONLY</small></article><article class="panel"><b>04</b><h3>Signed public evidence</h3><p>Live Testnet badge #1323 and owner wallet signature protect a read-only on-chain evidence receipt. No x402 transfers or paid actions.</p><small>LIVE PROOF · X402 GATE LOCKED</small></article></div>
+<div class="eyebrow">TRUST ARCHITECTURE / v0.8 TESTNET</div>
+<div class="page-heading"><div><h1>Proof over<br><span>promises.</span></h1><p>Concordium identity verification, scoped owner signatures, deterministic decisions and a guarded Testnet payment boundary. No x402 settlement has been demonstrated.</p></div></div>
+<div class="architecture"><article class="panel"><b>01</b><h3>Registry identity</h3><p>Server-side fixed-origin check requires all Concordium verification flags, zero issues and no inactive status.</p><small>IMPLEMENTED · AGENT #1323 VERIFIED</small></article><article class="panel"><b>02</b><h3>Policy engine</h3><p>Decimal-to-integer-cent validation, recipient allowlist, and thresholds for human review or denial.</p><small>IMPLEMENTED · TESTED</small></article><article class="panel"><b>03</b><h3>Audit export</h3><p>Each result includes policy version, reasons, verification metadata and SHA-256 digest.</p><small>IMPLEMENTED · SESSION ONLY</small></article><article class="panel"><b>04</b><h3>Signed evidence &amp; guarded x402</h3><p>Owner-signed Live Proof can be independently verified. The x402 Gateway checks Merchant, Sponsor, Redis and Testnet conditions, but is not a completed paid checkout.</p><small>LIVE EVIDENCE · SETTLEMENT NOT VERIFIED</small></article></div>
 <div class="panel links"><h3>Official resources</h3><a target="_blank" rel="noopener noreferrer" href="https://agent-registry.concordium.com/">Agent Registry ↗</a><a target="_blank" rel="noopener noreferrer" href="https://docs.concordium.com/en/mainnet/technical-reference/agent-registry/mcp-service.html">Registry API docs ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.encodeclub.com/programmes/concordium-trusted-agents-hackathon">Encode Club ↗</a></div>
 </section>
 </div></main></div></body></html>

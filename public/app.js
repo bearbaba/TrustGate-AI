@@ -113,3 +113,37 @@ for (const button of document.querySelectorAll('[data-view]')) {
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
 }
+
+/**
+ * The Decision Lab cannot authorize transfers. Show the actual public x402
+ * readiness state instead of stale claims embedded in the HTML template.
+ * This GET is unauthenticated, does not connect wallets or initiate payment.
+ */
+async function refreshGatewayStatus() {
+  const pill=byId('homePaymentStatus');
+  const label=byId('homeGatewayLabel');
+  const detail=byId('homeGatewayDetail');
+  try {
+    const response=await fetch('/api/x402/status',{cache:'no-store'});
+    if(!response.ok)throw Error('GATEWAY_STATUS_UNAVAILABLE');
+    const data=await response.json();
+    if(data.status==='LOCKED_UNTIL_CONFIGURED'){
+      label.textContent='Locked';
+      detail.textContent='Settlement disabled · prerequisites pending';
+      pill.textContent='x402 TESTNET · LOCKED';
+    }else if(data.status==='CONFIGURED_NOT_PAYMENT_TESTED'){
+      label.textContent='Configured';
+      detail.textContent='No successful settlement proof yet';
+      pill.textContent='x402 TESTNET · UNVERIFIED';
+    }else{
+      label.textContent='Unverified';
+      detail.textContent='Read the latest server status in the Gateway';
+      pill.textContent='x402 TESTNET · CHECK STATUS';
+    }
+  }catch{
+    label.textContent='Unavailable';
+    detail.textContent='Readiness could not be checked; do not assume payments are enabled';
+    pill.textContent='x402 TESTNET · STATUS UNKNOWN';
+  }
+}
+refreshGatewayStatus();
