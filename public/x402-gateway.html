@@ -4,12 +4,12 @@
 <meta name="description" content="TrustGate AI x402 Concordium Testnet gateway — configuration and safety status.">
 <title>TrustGate AI — x402 Payment Gateway</title>
 <link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/x402-gateway.css">
-<script src="/x402-gateway.js" defer></script><script src="/x402-preflight.js" defer></script></head>
+<script src="/x402-gateway.js" defer></script><script src="/x402-preflight.js" defer></script><script src="/x402-sponsored-wallet.js" defer></script></head>
 <body><main class="x402-wrap">
 <a class="back" href="/">← TrustGate AI / Decision Lab</a>
 <div class="eyebrow">CONCORDIUM · X402 EXACT · TESTNET ONLY</div>
 <h1>Payments with proof.<br><span>Never on blind trust.</span></h1>
-<p class="x402-lead">Our x402 gateway requires the Agent #1323 identity, an exact recipient and CCD amount, a live Concordium sponsored-transaction facilitator, and durable atomic replay protection. No Testnet payment can be initiated from this page.</p>
+<p class="x402-lead">Our x402 gateway requires the Agent #1323 identity, an exact recipient and CCD amount, a live Concordium sponsored-transaction facilitator, and durable atomic replay protection. The native wallet payment path is available only after Sponsor setup, and requires explicit user approval; the standardized x402 exact path remains separately gated.</p>
 <div class="x402-tags"><span>CCD TESTNET</span><span>SPONSORED TRANSACTIONS</span><span>FAIL CLOSED</span><span>NO MAINNET</span></div>
 <section class="panel x402-panel"><div class="x402-head"><div><small>01 / REAL-TIME GATE STATUS</small><h2>Configuration and prerequisites</h2></div><button class="outline" id="refreshStatus" type="button">Refresh status ↗</button></div>
 <div id="gatewayStatus" class="status" role="status" aria-live="polite">Checking server-side payment readiness…</div>
@@ -30,11 +30,19 @@
 <div id="challengeStatus" class="status" role="status" aria-live="polite">Safe preflight available; currently blocked by backend configuration.</div>
 <pre id="challengeResult" class="x402-output" aria-label="Public payment requirements only"></pre>
 </section>
-<section class="panel x402-panel"><div class="x402-head"><div><small>04 / TRUSTGATE PAYMENT BOUNDARY</small><h2>Identity → Policy → Settlement</h2></div></div>
+<section class="panel x402-panel"><div class="x402-head"><div><small>04 / NATIVE CONCORDIUM WALLET PAYMENT</small><h2>Owner-approved sponsored Testnet transfer</h2></div></div>
+<p>This path uses the official <strong>Concordium Wallet</strong> sponsor-first transaction flow: the server signs the fee sponsor portion and <strong>your wallet explicitly reviews, signs and submits</strong> the 0.1 Testnet CCD transfer. No wallet seed, export or private key is requested. The button stays fail-closed until signed Sponsor and gateway prerequisites pass.</p>
+<p><strong>Important:</strong> this is a <em>native sponsored CCD checkout</em>, separate from the sender-first <code>@x402/concordium/exact/client</code> payload. A verified transfer here is not yet the x402 paid-resource protocol.</p>
+<button class="outline" id="sponsoredWalletSend" type="button">Review and sign 0.1 Testnet CCD in Wallet ↗</button>
+<button class="outline" id="sponsoredInspect" type="button" disabled>Verify finalized transfer ↗</button>
+<div class="status" id="sponsoredWalletStatus" role="status" aria-live="polite">Gateway locked until Sponsor signing credentials are securely provisioned. No signature is requested while locked.</div>
+<pre class="x402-output" id="sponsoredWalletResult" aria-label="Native sponsored transfer status"></pre>
+</section>
+<section class="panel x402-panel"><div class="x402-head"><div><small>05 / TRUSTGATE PAYMENT BOUNDARY</small><h2>Identity → Policy → Settlement</h2></div></div>
 <div class="x402-sequence"><div><b>01</b><strong>Verify identity</strong><small>Agent #1323 Active, signed owner intent</small></div><div><b>02</b><strong>Enforce policy</strong><small>Exact merchant + 0.1 Testnet CCD</small></div><div><b>03</b><strong>Confirm sponsor</strong><small>Official /supported handshake, no guessed fee payer</small></div><div><b>04</b><strong>Settle or deny</strong><small>Atomic nonce reservation and finalized receipt</small></div></div>
 <p>The payment-signature is a separate wallet transaction signature. Your existing gasless Live Proof signature cannot authorize a money transfer.</p>
 </section>
 <div class="x402-bottom">
-<p><strong>Scope:</strong> the Merchant and dedicated Redis are configured; settlement remains disabled until the Sponsor is securely keyed, funded and verified. This page does not collect wallet seeds or take payments. A real x402 Testnet settlement is still pending and requires explicit user-controlled signing.</p>
+<p><strong>Scope:</strong> the Merchant and dedicated Redis are configured; settlement remains disabled until the Sponsor is securely keyed, funded and verified. This page never collects wallet seeds or authorizes transfers by itself. Native wallet-sponsored transfers require your explicit wallet signature; full x402 exact settlement and paid-resource access remain pending independent verification.</p>
 <a href="https://github.com/bearbaba/TrustGate-AI/blob/main/docs/X402_GATEWAY_SETUP.md" target="_blank" rel="noopener noreferrer">Gateway configuration and security checklist ↗</a>
 </div></main></body></html>
