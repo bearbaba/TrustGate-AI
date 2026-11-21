@@ -95,6 +95,23 @@ The owner used one freshly signed v0.5 Live Proof receipt to run all four securi
 
 **Still unverified:** REVIEW ($6.00) and BLOCK ($12.00) have not yet been witnessed on Production with the owner wallet. Durable nonce consumption, signed server-issued timestamps, merchant settlement and paid x402 resource delivery are not implemented. The artifact itself does not grant or spend any funds.
 
+## 2026-11-21 refreshed owner-observed Production evidence (v0.5)
+
+The owner supplied another **Live Proof v2 receipt** and the hosted verification result. The recorded nonce was `fad1570f0484d6c7046a7a0d8e20ee87`; the public receipt digest was `b6eca191a54cb672d5a723b737ca8bbb4880bb60d9879f29b7a0eb3201570f3b`. The $1.00 policy input returned ALLOW and `PUBLIC_READ_ONLY` evidence. Registry check at `2026-11-21T08:37:09.604Z`.
+
+The owner re-uploaded this receipt to Production Verify Receipt. The result was `SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED` at `2026-11-21T08:39:30.999Z`, with **all six checks true**: integrity, requestBinding, policyWitness, ownerSignature, currentRegistry and currentCardMatch.
+
+The same digest was then loaded into the Attack Lab with four owner-reported outcomes:
+
+| Scenario | Expected | Actual | Result |
+|---|---|---|---|
+| Original | `SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED` | `SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED` | ACCEPTED |
+| Policy tamper | `POLICY_WITNESS_MISMATCH` | `POLICY_WITNESS_MISMATCH` | REJECTED |
+| Signature tamper | `INVALID_OWNER_SIGNATURE` | `INVALID_OWNER_SIGNATURE` | REJECTED |
+| Card hash tamper | `CURRENT_CARD_MISMATCH` | `CURRENT_CARD_MISMATCH` | REJECTED |
+
+**Provenance:** These are results pasted by the owner from the hosted application, not independently collected server logs. We intentionally omit the wallet signature from the Markdown record. This is **not** proof of payment, immutable issuance timestamp, durable replay protection or an external security audit.
+
 ## Testing checklist
 
 - [x] v0.3 ALLOW completed with owner wallet on Production, receipt returned

@@ -55,7 +55,8 @@ const deps={
   config,now:NOW,makeServer:makeOffer(),accountLookup:async()=>({fixture:true}),
   verifySignature:async()=>true,verifyBadge:badgeVerifier,
   reserve:async()=>({ok:true,keys:{intentKey:'a',paymentKey:'b'}}),
-  markSettled:async()=>true
+  markSettled:async()=>true,
+  verifyFinalizedPayment:async()=>({ok:true,code:'MOCK_FINALIZED_TRANSFER_VERIFIED'})
 };
 async function call(path,headers={},overrides={}){
   const res=fakeResponse();
@@ -223,6 +224,41 @@ test('successful settlement and durable store required for paid access',async()=
   assert.equal(consumed,1);
   assert.ok(r.headers['PAYMENT-RESPONSE']);
 });
+test('facilitator success is insufficient when independent chain proof disagrees',async()=>{
+  let stored=0;
+  for(const proof of [
+    {ok:false,code:'ONCHAIN_SETTLEMENT_NOT_FINALIZED'},
+    {ok:false,code:'ONCHAIN_SETTLEMENT_SCOPE_MISMATCH'},
+    null
+  ]){
+    const response=await call('/api/x402/resource',{
+      'x-trustgate-intent':auth(),'payment-signature':wire()
+    },{
+      verifyFinalizedPayment:async()=>proof,
+      markSettled:async()=>{stored++;return true;}
+    });
+    assert.equal(response.statusCode,503);
+    assert.equal(response.data.manualReconciliationRequired,true);
+    assert.equal(response.data.transaction,'b'.repeat(64));
+    assert.equal(response.headers['PAYMENT-RESPONSE'],undefined);
+  }
+  assert.equal(stored,0);
+});
+
+test('independent proof RPC outage leaves payment reserved for reconciliation',async()=>{
+  let persisted=0;
+  const response=await call('/api/x402/resource',{
+    'x-trustgate-intent':auth(),'payment-signature':wire()
+  },{
+    verifyFinalizedPayment:async()=>{throw Error('RPC_DOWN');},
+    markSettled:async()=>{persisted++;return true;}
+  });
+  assert.equal(response.statusCode,503);
+  assert.equal(response.data.error,'ONCHAIN_SETTLEMENT_LOOKUP_UNAVAILABLE');
+  assert.equal(response.data.manualReconciliationRequired,true);
+  assert.equal(persisted,0);
+});
+
 test('replayed signed intent or unavailable durable store prevents settlement',async()=>{
   let settlementCalls=0;
   for(const reserve of [
