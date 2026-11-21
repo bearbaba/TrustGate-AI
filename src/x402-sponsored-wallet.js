@@ -2,6 +2,7 @@ import { detectConcordiumProvider } from '@concordium/browser-wallet-api-helpers
 import { AccountAddress } from '@concordium/web-sdk';
 import { Transaction } from '@concordium/web-sdk/transactions';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
+import {evaluateWalletSponsorReadiness} from '../lib/x402-wallet-readiness.js';
 import {
   assertWalletTestnet,createUnsignedX402Intent,buildX402SignedMessage,
   X402_SCOPE
@@ -13,6 +14,9 @@ const inspectButton=$('sponsoredInspect');
 const status=$('sponsoredWalletStatus');
 const output=$('sponsoredWalletResult');
 let submittedHash=null;
+let checkoutReady=false;
+let readinessSerial=0;
+let signingInProgress=false;
 
 function report(message,good=false){
   status.className='status '+(good?'good':'');
@@ -50,7 +54,47 @@ async function getJson(url,options={}) {
   return data;
 }
 
+async function refreshWalletReadiness(){
+  if(signingInProgress)return;
+  const serial=++readinessSerial;
+  checkoutReady=false;
+  button.disabled=true;
+  button.textContent='Checking payment prerequisites…';
+  report('Checking Gateway and Sponsor readiness without connecting a wallet…');
+  try{
+    const [gateway,sponsor]=await Promise.all([
+      getJson('/api/x402/status'),getJson('/api/sponsor/status')
+    ]);
+    let readiness=evaluateWalletSponsorReadiness(gateway,sponsor);
+    if(readiness.needsAccounts){
+      // Avoid costly public gRPC calls unless server flags are configured.
+      const accounts=await getJson('/api/sponsor/accounts');
+      readiness=evaluateWalletSponsorReadiness(gateway,sponsor,accounts);
+    }
+    if(serial!==readinessSerial)return;
+    checkoutReady=readiness.ready;
+    button.disabled=!checkoutReady;
+    button.textContent=checkoutReady?
+      'Review and sign 0.1 Testnet CCD in Wallet ↗':
+      'Checkout locked · Sponsor setup required';
+    report(readiness.message,checkoutReady);
+  }catch{
+    if(serial!==readinessSerial)return;
+    checkoutReady=false;
+    button.disabled=true;
+    button.textContent='Checkout locked · Readiness unavailable';
+    report('Could not verify payment prerequisites. Checkout remains disabled; no wallet popup will be requested.');
+  }
+}
+
 async function submitSponsoredWalletTransfer(){
+  // The UI is a convenience guard; the backend independently validates
+  // every prerequisite before any Sponsor signature can be generated.
+  if(!checkoutReady){
+    report('Checkout is locked: complete secure Sponsor setup and refresh readiness first.');
+    return;
+  }
+  signingInProgress=true;
   button.disabled=true;
   inspectButton.disabled=true;
   submittedHash=null;
@@ -106,7 +150,8 @@ async function submitSponsoredWalletTransfer(){
   }catch(error){
     report('Sponsored wallet checkout not completed: '+(error?.message||'wallet error'));
   }finally{
-    button.disabled=false;
+    signingInProgress=false;
+    button.disabled=!checkoutReady;
   }
 }
 
@@ -126,3 +171,10 @@ async function inspectSubmitted(){
 
 button?.addEventListener('click',submitSponsoredWalletTransfer);
 inspectButton?.addEventListener('click',inspectSubmitted);
+
+// The Gateway refresh button also rechecks Sponsor readiness. The existing
+// Gateway script dispatches this after its public status request resolves.
+document.addEventListener('trustgate:gateway-status-refreshed',refreshWalletReadiness);
+document.addEventListener('DOMContentLoaded',()=>{
+  if(readinessSerial===0)refreshWalletReadiness();
+});
