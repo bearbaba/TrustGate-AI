@@ -47,6 +47,14 @@ Upstash storage is supported through paired Vercel Marketplace environment varia
 
 Read [the gateway setup and safety checklist](docs/X402_GATEWAY_SETUP.md). Do not fund or deploy mainnet. Never put private keys in this repo.
 
+## First-party Concordium Testnet facilitator (v0.8 — disabled by default)
+
+The gateway now includes an optional **self-hosted, first-party sponsored-transaction facilitator** using the official `@x402/core/facilitator` and `@x402/concordium/exact/facilitator` packages. The server's `/api/sponsor/supported`, `/verify`, `/settle` endpoints are behind bearer authentication, fixed Testnet/merchant/owner/CCD amount checks, and secure sponsor configuration. A public `/api/sponsor/status` reports readiness without returning sensitive values.
+
+**This is source-level work, not confirmed Testnet settlement.** A third funded Testnet sponsor wallet, securely installed signing credential, confirmed gRPC connectivity, rate limiting, paying client and a real on-chain transaction are still required. Existing wallet keys are never reused or silently requested.
+
+Read [the sponsor configuration and acceptance criteria](docs/X402_GATEWAY_SETUP.md).
+
 ## Production path: real x402 settlement
 
 A genuine Concordium x402 flow has **not** been implemented. The official `@x402/concordium` package supports client, server and facilitator components; however, TrustGate cannot claim agent payments or payment authorization without an actual Testnet settlement to a separate receiving account and a verifiable transaction receipt. The [x402 integration checklist](docs/X402_INTEGRATION_PLAN.md) records the necessary steps and strict acceptance criteria.

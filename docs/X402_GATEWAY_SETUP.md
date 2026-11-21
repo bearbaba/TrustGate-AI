@@ -54,6 +54,36 @@ The original explicit `TRUSTGATE_X402_REDIS_URL` and `TRUSTGATE_X402_REDIS_TOKEN
 
 A Redis connection, once attached, only marks the replay-store prerequisite ready. **Do not enable actual transactions until the sponsored facilitator, V1 sender-signing client, and independent payment verification work end-to-end.**
 
+## Optional first-party Concordium Testnet facilitator (source-level v0.8)
+
+The official x402.org public development facilitator currently does **not advertise** the Concordium Testnet CAIP-2 network in its published supported list. A small first-party sponsor service is included at `/api/sponsor/*`, using the official `@x402/core/facilitator` and `@x402/concordium/exact/facilitator` SDK. These routes are **disabled until configured**. No sponsor signing key has been generated, installed or funded automatically; no on-chain payment has been executed.
+
+- `GET /api/sponsor/status`: public readiness (never returns secrets)
+- `GET /api/sponsor/supported`: authenticated real `/supported` response from official SDK
+- `POST /api/sponsor/verify`: authenticated cryptographic verification of a restricted Testnet payment
+- `POST /api/sponsor/settle`: authenticated sponsored settlement, **only after** exact sender, merchant, fee payer, CCD amount and Testnet scheme checks
+
+The service refuses all payment calls unless all conditions are met:
+1. The TrustGate merchant is configured.
+2. A third, dedicated **Concordium Testnet sponsor account**, distinct from the owner and merchant accounts, has been created and funded with **test CCD for fees**.
+3. The sponsor's Ed25519 private key is managed exclusively in Vercel encrypted environment variables — **never** paste or commit it to GitHub, public deployment, chat or page.
+4. A strong random API bearer secret is set privately. Resource-server calls to the first-party facilitator use the corresponding authorization header.
+5. The separate `TRUSTGATE_FACILITATOR_ENABLED=testnet` and `TRUSTGATE_X402_ENABLED=testnet` switches are explicitly enabled **only after** a safety review.
+6. Shared Redis is functional, and outbound Concordium Testnet gRPC can complete verification and finalization within the hosting runtime limits.
+
+Encrypted Production variables, to be set only when ready:
+
+| Key | Purpose |
+|---|---|
+| `TRUSTGATE_FACILITATOR_SPONSOR_ADDRESS` | Third Testnet account (public) |
+| `TRUSTGATE_FACILITATOR_SPONSOR_PRIVATE_KEY` | Sponsor Ed25519 secret; use encrypted Vercel env, never share |
+| `TRUSTGATE_FACILITATOR_AUTH_TOKEN` | Strong unique bearer secret for `/supported`, `/verify`, `/settle` |
+| `TRUSTGATE_X402_FACILITATOR_URL` | `https://trustgate-ai.vercel.app/api/sponsor` (first-party only) |
+| `TRUSTGATE_FACILITATOR_ENABLED` | `testnet`, after review |
+| `TRUSTGATE_X402_ENABLED` | `testnet`, after review |
+
+**Important:** This is a source-level facilitator implementation, not a completed live payment system. We have not verified Vercel runtime gRPC settlement, and the separate sender-signing client remains to be implemented. Before enabling public sponsored settlement, include abuse controls, operator incident response, independent transaction verification, rate limiting, and a bounded sponsor balance. Vercel function timeouts during settlement can produce an *ambiguous outcome*, leaving replay reservations locked for manual reconciliation. Do not claim real payment success without a block-explorer-confirmed Testnet transaction.
+
 ## Important limitations and required manual tests
 
 - The public browser page is a **readiness and quote inspector**, not a client that signs Concordium V1 sponsored transfers. A future paying client must use the official `@x402/concordium/exact/client` scheme in an owner-controlled secure wallet environment. Never enter a wallet private key on this page.
@@ -76,7 +106,8 @@ Open https://trustgate-ai.vercel.app/x402-gateway to inspect readiness. The gate
 - [x] **Atomic Redis Lua EVAL** reserving both nonce/payment keys and atomically persisting settlement (requires real Redis smoke test after connecting)
 - [x] Mock-backed tests of 402, verify, replay rejection and settlement prerequisite
 - [x] Merchant Testnet public address supplied and saved to Vercel Production (checksum validated; on-chain existence/ownership not independently verified)
-- [ ] Compatible sponsored facilitator set up, verified and funded (if required)
+- [x] First-party official SDK facilitator source and authorization gates (v0.8, **locked, not funded or live tested**)
+- [ ] Third dedicated sponsor Testnet wallet funded with test CCD, secure key configuration and real `/supported` smoke test
 - [ ] Secure Redis credentials configured, with a separate reconciliation plan
 - [ ] Paying client with owner-controlled V1 sponsored transaction signing
 - [ ] Actual successful Testnet transfer to merchant, on-chain transaction independently verified
