@@ -22,9 +22,15 @@ test('Sponsor limits use one atomic Redis Lua EVAL with bounded quota',async()=>
       fetchImpl:mock(1,requests)
     }),true);
     const cmd=JSON.parse(requests.at(-1).init.body);
-    assert.deepEqual(cmd.slice(0,3),['EVAL',SPONSOR_RATE_LIMIT_LUA,'1']);
+    assert.deepEqual(cmd.slice(0,2),['EVAL',SPONSOR_RATE_LIMIT_LUA]);
+    assert.equal(cmd[2],action==='settle'?'2':'1');
     assert.match(cmd[3],new RegExp('^tg:x402:sponsor:limit:'+action+':\\d+$'));
-    assert.deepEqual(cmd.slice(4),['120',String(limit)]);
+    if(action==='settle'){
+      assert.match(cmd[4],/^tg:x402:sponsor:daily-settle:\d+$/);
+      assert.deepEqual(cmd.slice(5),['120','4','172800','8']);
+    }else{
+      assert.deepEqual(cmd.slice(4),['120',String(limit)]);
+    }
     assert.equal(requests.at(-1).init.method,'POST');
     assert.equal(requests.at(-1).init.redirect,'error');
     assert.equal(requests.at(-1).init.headers.Authorization,'Bearer test-only-token');
@@ -32,7 +38,7 @@ test('Sponsor limits use one atomic Redis Lua EVAL with bounded quota',async()=>
   }
 });
 
-test('Exceeded quota rejects calls and never assumes success',async()=>{
+test('Exceeded minute or daily quota rejects calls and never assumes success',async()=>{
   assert.equal(await enforceSponsorRateLimit(config,'settle',{fetchImpl:mock(0,[])}),false);
   assert.equal(await enforceSponsorRateLimit(config,'verify',{fetchImpl:mock('0',[])}),false);
 });
