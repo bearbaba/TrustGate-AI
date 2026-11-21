@@ -102,9 +102,23 @@ Once the sponsor endpoints are explicitly enabled, every authenticated `/support
 |---|---:|
 | `GET /api/sponsor/supported` | 30 |
 | `POST /api/sponsor/verify` | 24 |
-| `POST /api/sponsor/settle` | 4 |
+| `POST /api/sponsor/settle` | 4 per minute **and max 8 per UTC day** |
 
-A single Upstash `EVAL` performs `INCR` and sets an expiry for each global counter. Exceeded quotas return HTTP 429. Redis errors or ambiguous results return HTTP 503 and never invoke sponsor signing. Limits intentionally favor this single-owner Testnet demo, not public payment throughput. Counters contain no personal identifiers or credentials. This control does **not** replace spending caps, key custody, transaction reconciliation, or monitoring; only authorize sponsorship after all those controls are reviewed. No sponsor gas or payment is charged by this readiness work.
+A single Upstash `EVAL` performs `INCR` and sets an expiry for each global counter; settlement checks both the minute bucket and an independent UTC-day bucket atomically. Exceeded quotas return HTTP 429. Redis errors or ambiguous results return HTTP 503 and never invoke sponsor signing. Limits intentionally favor this single-owner Testnet demo, not public payment throughput. Counters contain no personal identifiers or credentials. This control does **not** replace spending caps, key custody, transaction reconciliation, or monitoring; only authorize sponsorship after all those controls are reviewed. No sponsor gas or payment is charged by this readiness work.
+
+## Owner-wallet HTTP 402 preflight (no CCD signing)
+
+The gateway page now has a **Check owner-signed HTTP 402** action. It is a deliberately *read-only* integration step for the current Concordium Wallet for Web, not a substitute for the `@x402/concordium/exact/client` V1 payment signer.
+
+1. The browser checks `/api/x402/status`. If settlement is locked, the action stops **before** requesting a wallet signature.
+2. When configuration is ready, the user connects the registered Agent #1323 owner wallet on Testnet and signs the canonical `trustgate-x402-intent/v1` message (exact badge, nonce, merchant, amount, chain, resource and 90-second validity).
+3. The browser sends that signed intent via `X-Trustgate-Intent` to `GET /api/x402/resource`, **without** a `PAYMENT-SIGNATURE` header.
+4. The backend verifies wallet signature and Agent #1323 badge, then issues official HTTP 402 and `PAYMENT-REQUIRED`. The browser independently compares fixed Testnet amount, asset, recipient, fee payer and header/body consistency.
+5. The UI displays only public requirements. It does **not** retain the owner's signature or attempt an on-chain transfer.
+
+The wallet's existing `signMessage` API is only an access-intent signature, never permission to transfer CCD. The official Concordium browser wallet documents a *sponsor-first* `sendSponsoredTransaction` flow; the `@x402/concordium/exact/client` implementation here uses a *sender-first* signed V1 payment payload for the facilitator to submit. These are **not interchangeable** without designing and testing an explicit protocol adapter. We intentionally have not added a private-key collection form, a wallet export upload or an unsupported browser payment bridge.
+
+References: [Concordium protocol-level sponsored transaction tutorial](https://docs.concordium.com/en/mainnet/tutorials/protocol-level-sponsored-transactions/create-a-sponsored-transaction.html), [x402 Concordium mechanism source](https://github.com/x402-foundation/x402/tree/main/typescript/packages/mechanisms/concordium).
 
 ## Important limitations and required manual tests
 
@@ -132,6 +146,7 @@ Open https://trustgate-ai.vercel.app/x402-gateway to inspect readiness. The gate
 - [x] Distinct third Testnet sponsor **public account address** configured on Vercel (checksum validated, not proven funded)
 - [ ] Sponsor funded with test CCD, securely installed signing key, and real `/supported` smoke test
 - [x] Secure Redis credentials connected to Vercel Production (reconciliation plan still required)
+- [x] Read-only browser owner-signed access intent and strict HTTP 402 challenge inspector (only usable once Sponsor is configured)
 - [ ] Paying client with owner-controlled V1 sponsored transaction signing
 - [ ] Actual successful Testnet transfer to merchant, on-chain transaction independently verified
 - [ ] Operational monitoring, reconciliation, rate limiting and independent settlement check
