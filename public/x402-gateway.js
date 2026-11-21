@@ -61,12 +61,16 @@ async function checkChainAccounts(){
       const code=body.error||'CHAIN_STATUS_UNAVAILABLE';
       throw Error(code);
     }
-    const ready=body.status==='ACCOUNTS_PRESENT_SPONSOR_HAS_CCD';
-    $('chainStatus').className='status '+(ready?'good':'bad');
-    $('chainStatus').textContent=ready?
-      'Both accounts exist on Testnet and Sponsor has nonzero available CCD. Signing key and fee sufficiency are NOT verified; payments remain locked.':
+    const funded=body.status==='ACCOUNTS_PRESENT_SPONSOR_HAS_CCD';
+    const keyVerified=body.signingKeyVerified===true;
+    $('chainStatus').className='status '+(funded&&keyVerified?'good':funded?'':'bad');
+    $('chainStatus').textContent=funded&&keyVerified?
+      'Merchant and Sponsor exist, Sponsor has available Testnet CCD, and the configured single signing key matches the active on-chain credential. Fee sufficiency and settlement are still NOT verified; payments remain gated.':
+      funded?
+        'Merchant and Sponsor exist with available Testnet CCD. Sponsor key is not verified ('+
+        (body.signingKeyStatus||'NOT_CONFIGURED')+'). Do not enable settlement.':
       body.status==='ONCHAIN_LOOKUP_UNAVAILABLE'?
-        'RPC unavailable: account existence and funding cannot be confirmed. Gateway remains locked.':
+        'RPC unavailable: account existence, funding and signing authority cannot be confirmed. Gateway remains locked.':
         'Not ready: Merchant and Sponsor must be on-chain and Sponsor must have available Testnet CCD. Status: '+body.status;
   }catch(error){
     $('chainStatus').className='status bad';

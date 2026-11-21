@@ -65,7 +65,7 @@ The first-party Sponsor adds a separate **eight settlement-call UTC daily cap** 
 
 ### Sponsor and Merchant on-chain account checks (read-only)
 
-The x402 Gateway includes a **Check on-chain** action backed by `GET /api/sponsor/accounts`. It queries the actual Concordium Testnet account state without connecting a wallet or signing a transaction; a shared Redis rate limit of 15 checks/minute protects the public RPC path. The response distinguishes positive available Sponsor CCD from unavailable RPC, but does **not** claim sufficient gas, matching signing-key ownership, or settled payments. The first-party facilitator also checks Merchant existence and positive Sponsor available balance before constructing its fee-paying signer; any unavailable state fails closed. Sponsor payment flags are still disabled.
+The x402 Gateway includes a **Check on-chain** action backed by `GET /api/sponsor/accounts`. It queries the actual Concordium Testnet account state without connecting a wallet or signing a transaction; a shared Redis rate limit of 15 checks/minute protects the public RPC path. The response distinguishes positive available Sponsor CCD from unavailable RPC and now reports whether a configured **single Ed25519 signing key matches the Sponsor's active on-chain credential** (`signingKeyVerified`), without revealing signing material. The first-party facilitator requires both a funded account **and** a verified signer key (single-key signature thresholds only) before constructing its fee-paying SDK. Invalid keys, incompatible multi-signature accounts and RPC failures all fail closed. The check does **not** claim sufficient gas or settled payments. Sponsor payment flags are still disabled.
 
 ## Production path: real x402 settlement
 
