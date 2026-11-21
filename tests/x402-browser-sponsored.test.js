@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CcdAmount} from '@concordium/web-sdk';
+import {CcdAmount,SequenceNumber} from '@concordium/web-sdk';
 import {handleBrowserSponsoredPrepare,prepareSponsoredCcdTransaction}
   from '../lib/x402-browser-sponsored.js';
 import {handleBrowserSponsoredInspect} from '../lib/x402-browser-inspect.js';
@@ -126,7 +126,7 @@ test('Sponsor signing failure remains locked and does not masquerade as approval
 
 test('SDK sponsor-first builder creates authentic V1 transaction with fixed CCD target',async()=>{
   const tx=await prepareSponsoredCcdTransaction(sponsorConfig,intent,{
-    fetchNonce:async()=>1n
+    fetchNonce:async()=>SequenceNumber.create(1n)
   });
   assert.equal(tx.version,1);
   assert.equal(tx.header.sender,PROOF_CONTEXT.owner);
