@@ -4,6 +4,18 @@
 
 The gateway uses the official `@x402/core@2.31.0` and `@x402/concordium@2.31.0` packages for the Concordium `exact` scheme. It is intentionally disabled on the public deployment until all necessary Testnet configuration exists. It must not be presented as real payment settlement before a transaction is verified.
 
+## Readiness UX and current Production lock (2026-11-21)
+
+The **Review and sign 0.1 Testnet CCD in Wallet** button now starts **disabled** and stays disabled until all three read-only public checks succeed:
+
+- `GET /api/x402/status`: `CONFIGURED_NOT_PAYMENT_TESTED` with no missing gateway prerequisites.
+- `GET /api/sponsor/status`: `CONFIGURED_UNTESTED` with no missing Sponsor prerequisites.
+- `GET /api/sponsor/accounts`: both accounts on-chain, Sponsor funded, signing key independently verified against credential 0/key 0, network and Merchant matching.
+
+The UI displays the first actionable missing prerequisite and never opens a wallet extension while locked. **Refresh status** reruns the readiness checks. An explicit checkout action still repeats the **server-side** checks independently; browser readiness is not a substitute for authorization.
+
+At the latest observed Production check, the gateway was locked with `ENABLE_TESTNET_GATEWAY` and `HTTPS_CONCORDIUM_FACILITATOR`; the Sponsor reported `FACILITATOR_DISABLED`, `SPONSOR_KEY_SECURELY_CONFIGURED`, `SPONSOR_API_AUTH_CONFIGURED`, `GATEWAY_SAFETY_PREREQUISITES`, and `FACILITATOR_URL_NOT_FIRST_PARTY`. The on-chain Sponsor had available Testnet CCD but `SPONSOR_KEY_NOT_CONFIGURED`. **Do not enable settlement before secure signing-key custody is established.** Changes to secret env vars belong only in the owner's restricted Vercel Environment Variables settings; no key material is accepted in this application, PRs or chat.
+
 ## Browser wallet payment path (native Concordium, not x402 exact)
 
 **Free-tier routing:** Both browser preparation and chain inspection are multiplexed through the existing `/api/x402/resource` Vercel function using the explicit `mode` query. This avoids exceeding the Hobby plan's 12-function limit. They are not extra deployed API functions.
@@ -19,7 +31,7 @@ TrustGate now includes a **separate opt-in native sponsored checkout**, visibly 
 4. A global Redis Lua quota allows **at most two preparation attempts per minute and four per UTC day**. Another atomic Redis reservation locks the specific owner-intent nonce before issuing the Sponsor-signed transaction. If preparation fails ambiguously, its reservation stays locked.
 5. The server creates a *fixed* V1 `Transaction.transfer` for **100000 microCCD**, from Agent #1323 owner to the configured Merchant, with Sponsor paying network fees. Only the Sponsor portion is signed on the server. No keys appear in the response.
 6. The owner independently reviews and authorizes the transaction through `provider.sendSponsoredTransaction(...)` in Concordium Wallet; the wallet submits it and returns a transaction hash. TrustGate never claims finalization solely from a browser-returned hash.
-7. `GET /api/x402/resource?mode=browser-inspect?hash=<64-hex>` performs a **read-only, rate-limited** independent finalized transaction scope check (owner, recipient, amount, Sponsor and hash), even when the checkout is later locked. The result `verified=true` proves only a matching on-chain transfer, **not** that a particular prior browser session received a paid x402 resource or that the payment cannot be replayed across sessions.
+7. `GET /api/x402/resource?mode=browser-inspect&hash=<64-hex>` performs a **read-only, rate-limited** independent finalized transaction scope check (owner, recipient, amount, Sponsor and hash), even when the checkout is later locked. The result `verified=true` proves only a matching on-chain transfer, **not** that a particular prior browser session received a paid x402 resource or that the payment cannot be replayed across sessions.
 
 **Operational blocker:** The Sponsor key is **not yet present** in Vercel Production. The browser cannot prepare a transfer until the operator privately configures a correct Sponsor Ed25519 seed and strong API bearer token in Vercel encrypted environment variables and then intentionally enables Testnet flags. Do not put those credentials in chat, a file upload, a GitHub commit or a wallet connection dialog. The Testnet-funded Sponsor public account is not equivalent to private-key custody. Avoid enabling with more CCD than necessary.
 
