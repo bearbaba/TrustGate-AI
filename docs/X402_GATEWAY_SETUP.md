@@ -120,6 +120,20 @@ The wallet's existing `signMessage` API is only an access-intent signature, neve
 
 References: [Concordium protocol-level sponsored transaction tutorial](https://docs.concordium.com/en/mainnet/tutorials/protocol-level-sponsored-transactions/create-a-sponsored-transaction.html), [x402 Concordium mechanism source](https://github.com/x402-foundation/x402/tree/main/typescript/packages/mechanisms/concordium).
 
+## Sponsor signing-key authority (fail-closed, Testnet only)
+
+The first-party Concordium facilitator now checks **more than a funded Sponsor account** before it can create a fee-paying SDK signer:
+
+- Derive the Ed25519 public key in memory from the **32-byte hex secret seed** supplied securely by Vercel environment variables. No secret is collected by the website or stored in Redis, logs or an API response.
+- Read the *current* Sponsor Testnet account credentials through gRPC.
+- Require `accountThreshold === 1`, credential index `0` of type `initial` or `normal`, that credential's `threshold === 1`, and Ed25519 key index `0` equal to the key derived from the configured seed. A basic single-key signer cannot satisfy higher signature thresholds.
+- Reject missing/mismatched credentials, a rotated key, an unsupported signer shape, or RPC failure **before** creating the x402 fee-payer signer. Each facilitator initialization repeats the check.
+- `GET /api/sponsor/accounts` reports only `signingKeyVerified` and a safe `signingKeyStatus` alongside public account/funding status. It does not reveal the seed, derived key or credential contents. Its existing global 15/minute Redis limit still applies.
+
+The unit tests use RFC 8032's **public** Ed25519 test vector, not a TrustGate key. The deployed sponsor has not yet been provisioned with an authorized secret; this gate therefore does **not** prove an operational signing key or a successful payment. Configure secrets only using restricted Vercel project settings; do not paste private keys or seed phrases into ChatGPT or GitHub.
+
+**Still required for a real x402 payment:** owner-controlled V1 sender transaction signing, capped Testnet funds, finalization and independent on-chain reconciliation, replay validation, one paid API delivery, and a CCDExplorer transaction.
+
 ## Independent public Testnet account readiness (read-only)
 
 The gateway's **Check on-chain** action queries `GET /api/sponsor/accounts`. It checks the current Merchant and Sponsor Testnet accounts using the Concordium gRPC SDK. It does not connect a wallet, return signing credentials, or submit any transaction. A single atomic Upstash `EVAL` limits requests to **15 globally per minute**, even while settlement is disabled. When Redis is unavailable, no RPC call is attempted.
