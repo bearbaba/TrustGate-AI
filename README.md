@@ -43,6 +43,8 @@ The x402 gateway now contains a **source-level testnet resource endpoint**, usin
 
 **The live environment is not yet configured for merchant payments, and NO actual x402 payment has been demonstrated.** The separate Merchant Testnet public address has now been provided and configured on Vercel Production: `4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf`. A compatible sponsor/facilitator and shared durable Redis are still required, and payment remains disabled. The public page deliberately shows a LOCKED gateway until those are set. A wallet `signMessage` is not a payment signature; client-side sponsored transaction signing is also still to be built.
 
+Upstash storage is supported through paired Vercel Marketplace environment variables (`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`) or legacy `KV_REST_API_*`, in addition to the explicit TrustGate names. The Upstash integration must be connected to **this project**, not just installed in the Vercel team. No raw Redis token belongs in this repository.
+
 Read [the gateway setup and safety checklist](docs/X402_GATEWAY_SETUP.md). Do not fund or deploy mainnet. Never put private keys in this repo.
 
 ## Production path: real x402 settlement

@@ -42,6 +42,18 @@ This address has valid Concordium Base58Check format and was saved in Vercel Pro
 
 Never paste the Redis token or wallet private key into chat/GitHub. Configure through Vercel's encrypted environment variable UI. An ordinary public x402 facilitator may **not support Concordium**. The code must reject an unsupported network or missing sponsor.
 
+## Upstash already provisioned on Vercel
+
+The application now also accepts **Vercel Marketplace Upstash credentials** automatically when the database is attached to the TrustGate AI project:
+- `UPSTASH_REDIS_REST_URL` together with `UPSTASH_REDIS_REST_TOKEN`
+- Legacy `KV_REST_API_URL` together with `KV_REST_API_TOKEN`
+
+The original explicit `TRUSTGATE_X402_REDIS_URL` and `TRUSTGATE_X402_REDIS_TOKEN` remain supported. Pairs are matched; a URL from one database is never silently combined with a token from another database.
+
+**Account-level Upstash integration is not the same as connecting Redis to this project.** On 2026-11-21 the Upstash Marketplace integration was installed for the Vercel team but had no attached projects; TrustGate AI exposed only the public Merchant environment variable. To connect an existing database, open **Vercel → TrustGate AI → Storage / Infrastructure → Upstash → Connect Project** and select Production. The provider creates the app credentials in Vercel, so do not paste them into GitHub or chat. A new Production deployment may be needed to load newly added environment variables.
+
+A Redis connection, once attached, only marks the replay-store prerequisite ready. **Do not enable actual transactions until the sponsored facilitator, V1 sender-signing client, and independent payment verification work end-to-end.**
+
 ## Important limitations and required manual tests
 
 - The public browser page is a **readiness and quote inspector**, not a client that signs Concordium V1 sponsored transfers. A future paying client must use the official `@x402/concordium/exact/client` scheme in an owner-controlled secure wallet environment. Never enter a wallet private key on this page.

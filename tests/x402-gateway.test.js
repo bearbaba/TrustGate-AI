@@ -76,6 +76,38 @@ test('reject sender-as-merchant, non-HTTPS facilitator and invalid configuration
   assert.equal(readX402Config({...env,TRUSTGATE_X402_FACILITATOR_URL:'http://localhost:3000'}).configured,false);
   assert.equal(readX402Config({...env,TRUSTGATE_X402_REDIS_TOKEN:''}).configured,false);
 });
+test('supports Vercel Upstash Marketplace credentials without exposing REST secrets',()=>{
+  const marketplace = {
+    TRUSTGATE_X402_ENABLED:'testnet',
+    TRUSTGATE_X402_MERCHANT_ADDRESS:merchant,
+    TRUSTGATE_X402_FACILITATOR_URL:'https://sponsor.example.com',
+    UPSTASH_REDIS_REST_URL:'https://store.upstash.io',
+    UPSTASH_REDIS_REST_TOKEN:'marketplace-secret'
+  };
+  const result = readX402Config(marketplace);
+  assert.equal(result.configured,true);
+  assert.equal(result.redisUrl,'https://store.upstash.io');
+  assert.equal(result.redisToken,'marketplace-secret');
+  const output=publicX402Status(result);
+  assert.equal(JSON.stringify(output).includes('marketplace-secret'),false);
+  assert.equal(JSON.stringify(output).includes('store.upstash.io'),false);
+  assert.equal(readX402Config({...marketplace,UPSTASH_REDIS_REST_TOKEN:''}).configured,false);
+});
+test('uses paired Redis credentials and never pairs URL from one store with another store token',()=>{
+  const mix={
+    TRUSTGATE_X402_ENABLED:'testnet',
+    TRUSTGATE_X402_MERCHANT_ADDRESS:merchant,
+    TRUSTGATE_X402_FACILITATOR_URL:'https://sponsor.example.com',
+    TRUSTGATE_X402_REDIS_URL:'https://incorrect.upstash.io',
+    UPSTASH_REDIS_REST_TOKEN:'wrong-pair'
+  };
+  const mixed=readX402Config(mix);
+  assert.equal(mixed.configured,false);
+  const legacy=readX402Config({...mix,KV_REST_API_URL:'https://kv.upstash.io',KV_REST_API_TOKEN:'kv-secret'});
+  assert.equal(legacy.configured,true);
+  assert.equal(legacy.redisUrl,'https://kv.upstash.io');
+  assert.equal(legacy.redisToken,'kv-secret');
+});
 test('signed scope binds price in microCCD, payee, chain and resource (not USD)',()=>{
   const intent=makeIntent();
   assert.equal(validateX402Intent(intent,config,NOW).ok,true);
