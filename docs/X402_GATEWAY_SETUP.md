@@ -132,7 +132,7 @@ The first-party Concordium facilitator now checks **more than a funded Sponsor a
 
 The unit tests use RFC 8032's **public** Ed25519 test vector, not a TrustGate key. The deployed sponsor has not yet been provisioned with an authorized secret; this gate therefore does **not** prove an operational signing key or a successful payment. Configure secrets only using restricted Vercel project settings; do not paste private keys or seed phrases into ChatGPT or GitHub.
 
-**Still required for a real x402 payment:** owner-controlled V1 sender transaction signing, capped Testnet funds, finalization and independent on-chain reconciliation, replay validation, one paid API delivery, and a CCDExplorer transaction.
+**Still required for a real x402 payment:** owner-controlled V1 sender transaction signing, securely authorized Sponsor funds, live use of the independent finalization checker, operational reconciliation for RPC outages, one paid API delivery, and a CCDExplorer transaction. Unit tests cannot substitute for that evidence.
 
 ## Independent public Testnet account readiness (read-only)
 
@@ -148,7 +148,7 @@ Before building its fee-paying SDK signer, the first-party facilitator repeats t
 - The HTTP 402 and settlement paths have mock-backed automated tests. **No real Testnet payment has yet been made or observed in CCDExplorer**.
 - A single atomic Upstash Redis Lua `EVAL` reserves the intent and payment keys together; the settlement record transition is also atomic and conditioned on both keys remaining reserved. An ambiguous settlement leaves locks in place and requires **manual transaction reconciliation**. This is deliberately fail-closed. There is no automated recovery portal yet.
 - Storage must be reliable and atomic; serverless in-memory Maps are insufficient. Rate limits, monitoring and merchant reconciliation should be added before operating a public paid service.
-- The response relies on the *configured facilitator's verified and finalized settlement result*. A production launch should independently cross-check transaction finalization with Concordium gRPC and provide settlement observability.
+- **New fail-closed independent finalization check:** following the facilitator's successful response, the resource server directly reads the transaction's finalized block-item summary from the Concordium Testnet node through `getBlockItemStatus`. It matches the transaction hash, the sender Agent #1323 owner account, exact merchant receiver, exact 100000 microCCD amount, and Sponsor fee payer. A pending/failed/wrong-type/unavailable response returns HTTP 503, keeps the Redis replay reservation in progress, and requires reconciliation rather than issuing paid evidence. This check is covered by mocked tests only; it has not observed any completed Testnet x402 transaction.
 - The unpaid owner-signed message is **not** a transfer authorization. The payment signature must be produced separately by the owner-controlled payment client. Review sponsor and payee before signing.
 - Use Testnet CCD only. A real user-controlled signature can transfer Testnet CCD after all prerequisites are explicitly enabled. **No Mainnet signing is supported**.
 
@@ -172,7 +172,8 @@ Open https://trustgate-ai.vercel.app/x402-gateway to inspect readiness. The gate
 - [x] Read-only browser owner-signed access intent and strict HTTP 402 challenge inspector (only usable once Sponsor is configured)
 - [ ] Paying client with owner-controlled V1 sponsored transaction signing
 - [ ] Actual successful Testnet transfer to merchant, on-chain transaction independently verified
-- [ ] Operational monitoring, reconciliation, rate limiting and independent settlement check
+- [x] Source-level independent on-chain **finalized CCD transfer** verification with fail-closed mocked tests (no live paid receipt)
+- [ ] Operational monitoring and reconciliation workflow for partial or ambiguous settlement
 - [ ] Accurate hackathon video showing real 402 → sponsor-settled CCD → paid resource
 
 The current project may demonstrate the **ready-to-integrate software structure** but MUST NOT claim payment execution or full x402 completion yet.
