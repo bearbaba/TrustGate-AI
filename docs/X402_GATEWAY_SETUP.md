@@ -82,7 +82,7 @@ Encrypted Production variables, to be set only when ready:
 | `TRUSTGATE_FACILITATOR_ENABLED` | `testnet`, after review |
 | `TRUSTGATE_X402_ENABLED` | `testnet`, after review |
 
-**Important:** This is a source-level facilitator implementation, not a completed live payment system. We have not verified Vercel runtime gRPC settlement, and the separate sender-signing client remains to be implemented. Before enabling public sponsored settlement, include abuse controls, operator incident response, independent transaction verification, rate limiting, and a bounded sponsor balance. Vercel function timeouts during settlement can produce an *ambiguous outcome*, leaving replay reservations locked for manual reconciliation. Do not claim real payment success without a block-explorer-confirmed Testnet transaction.
+**Important:** This is a source-level facilitator implementation, not a completed live payment system. We have not verified Vercel runtime gRPC settlement, and the separate sender-signing client remains to be implemented. Before enabling public sponsored settlement, include abuse controls, operator incident response, independent transaction verification, rate limiting, and a bounded sponsor balance. The first-party settle and resource functions allow up to 120 seconds on Vercel Fluid Compute, while the HTTP facilitator request has a 75-second deadline. Vercel function timeouts during settlement can produce an *ambiguous outcome*, leaving replay reservations locked for manual reconciliation. Do not claim real payment success without a block-explorer-confirmed Testnet transaction.
 
 ## Important limitations and required manual tests
 
