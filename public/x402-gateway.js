@@ -34,6 +34,8 @@ async function getStatus() {
     $('gatewayStatus').className='status bad';
     $('gatewayStatus').textContent='Could not verify server readiness: '+err.message;
     $('readinessChecks').replaceChildren();
+  }finally{
+    document.dispatchEvent(new Event('trustgate:gateway-status-refreshed'));
   }
 }
 $('refreshStatus').addEventListener('click',getStatus);
