@@ -1,4 +1,6 @@
 import test from 'node:test';
+import {readdir} from 'node:fs/promises';
+import resourceHandler from '../api/x402/resource.js';
 import assert from 'node:assert/strict';
 import {CcdAmount,SequenceNumber} from '@concordium/web-sdk';
 import {handleBrowserSponsoredPrepare,prepareSponsoredCcdTransaction}
@@ -166,4 +168,30 @@ test('inspection RPC errors remain unverified',async()=>{
   assert.equal(r.state.statusCode,200);
   assert.equal(r.state.body.verified,false);
   assert.equal(r.state.body.code,'ONCHAIN_SETTLEMENT_LOOKUP_UNAVAILABLE');
+});
+
+test('single Vercel Hobby API function multiplexes native prep/inspect without unguarded fallthrough',async()=>{
+  async function walk(path) {
+    const dir=await readdir(new URL(path,import.meta.url),{withFileTypes:true});
+    let n=0;
+    for(const e of dir){
+      if(e.isFile()&&e.name.endsWith('.js'))n++;
+      else if(e.isDirectory())n+=await walk(path+e.name+'/');
+    }
+    return n;
+  }
+  const n=await walk('../api/');
+  assert.equal(n,12,'Hobby plan permits at most 12 deployed Serverless Functions');
+  const prep=fakeRes();
+  await resourceHandler({method:'GET',query:{mode:'browser-prepare'},headers:{}},prep);
+  assert.equal(prep.state.statusCode,405);
+  assert.equal(prep.state.body.error,'METHOD_NOT_ALLOWED');
+  const invalid=fakeRes();
+  await resourceHandler({method:'GET',query:{mode:'browser-inspect',hash:'nope'},headers:{}},invalid);
+  assert.equal(invalid.state.statusCode,400);
+  assert.equal(invalid.state.body.error,'INVALID_TRANSACTION_HASH');
+  const unchanged=fakeRes();
+  await resourceHandler({method:'GET',query:{},headers:{}},unchanged);
+  assert.equal(unchanged.state.statusCode,503);
+  assert.equal(unchanged.state.body.status,'LOCKED_UNTIL_CONFIGURED');
 });
