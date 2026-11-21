@@ -26,6 +26,14 @@ function requireScope(response,account,merchant,sponsor){
     response.owner!==account || response.merchant!==merchant ||
     response.sponsor!==sponsor)throw Error('PREPARED_TRANSACTION_SCOPE_MISMATCH');
   const header=response.sponsoredTransaction?.header;
+  const payload=response.sponsoredTransaction?.payload;
+  // Independently inspect the real V1 JSON, not only top-level labels.
+  // Even a malformed backend must never bring an unexpected action to
+  // the wallet's confirmation screen.
+  if(payload?.type!=='transfer'||
+     payload.toAddress!==merchant ||
+     payload.amount!==X402_SCOPE.amountMicroCcd)
+    throw Error('PREPARED_TRANSACTION_TRANSFER_MISMATCH');
   if(header?.sender!==account ||
     (header?.sponsor?.address!==sponsor &&
       header?.sponsor?.account!==sponsor) ||
