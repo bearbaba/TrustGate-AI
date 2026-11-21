@@ -120,6 +120,14 @@ The wallet's existing `signMessage` API is only an access-intent signature, neve
 
 References: [Concordium protocol-level sponsored transaction tutorial](https://docs.concordium.com/en/mainnet/tutorials/protocol-level-sponsored-transactions/create-a-sponsored-transaction.html), [x402 Concordium mechanism source](https://github.com/x402-foundation/x402/tree/main/typescript/packages/mechanisms/concordium).
 
+## Independent public Testnet account readiness (read-only)
+
+The gateway's **Check on-chain** action queries `GET /api/sponsor/accounts`. It checks the current Merchant and Sponsor Testnet accounts using the Concordium gRPC SDK. It does not connect a wallet, return signing credentials, or submit any transaction. A single atomic Upstash `EVAL` limits requests to **15 globally per minute**, even while settlement is disabled. When Redis is unavailable, no RPC call is attempted.
+
+The account check distinguishes `ACCOUNTS_PRESENT_SPONSOR_HAS_CCD` from `ACCOUNTS_NOT_READY` and `ONCHAIN_LOOKUP_UNAVAILABLE`; a timeout never means an account was proved absent. A positive *available* Sponsor balance establishes only that the account holds some spendable Testnet CCD. It does **not** establish enough CCD to pay the actual transaction fee, that the private key belongs to the configured Sponsor address, or that any x402 payment succeeded.
+
+Before building its fee-paying SDK signer, the first-party facilitator repeats this on-chain check. Missing merchant account, no spendable CCD or an RPC failure blocks signing. This is a source-level safety gate; it remains unexercised with a funded on-chain Sponsor until real credentials and funds are configured. Never enable payment flags until signing-key ownership, spending limit, client compatibility, replay/incident handling and on-chain settlement have been demonstrated.
+
 ## Important limitations and required manual tests
 
 - The public browser page is a **readiness and quote inspector**, not a client that signs Concordium V1 sponsored transfers. A future paying client must use the official `@x402/concordium/exact/client` scheme in an owner-controlled secure wallet environment. Never enter a wallet private key on this page.
@@ -144,6 +152,7 @@ Open https://trustgate-ai.vercel.app/x402-gateway to inspect readiness. The gate
 - [x] Merchant Testnet public address supplied and saved to Vercel Production (checksum validated; on-chain existence/ownership not independently verified)
 - [x] First-party official SDK facilitator source and authorization gates (v0.8, **locked, not funded or live tested**)
 - [x] Distinct third Testnet sponsor **public account address** configured on Vercel (checksum validated, not proven funded)
+- [x] Read-only on-chain Sponsor/Merchant readiness check with Redis RPC quota and fail-closed signer preflight
 - [ ] Sponsor funded with test CCD, securely installed signing key, and real `/supported` smoke test
 - [x] Secure Redis credentials connected to Vercel Production (reconciliation plan still required)
 - [x] Read-only browser owner-signed access intent and strict HTTP 402 challenge inspector (only usable once Sponsor is configured)
