@@ -9,6 +9,7 @@ import x402Status from './api/x402/status.js';
 import x402Quote from './api/x402/quote.js';
 import x402Resource from './api/x402/resource.js';
 import sponsorStatus from './api/sponsor/status.js';
+import sponsorAccounts from './api/sponsor/accounts.js';
 import sponsorSupported from './api/sponsor/supported.js';
 import sponsorVerify from './api/sponsor/verify.js';
 import sponsorSettle from './api/sponsor/settle.js';
@@ -21,7 +22,7 @@ const app = createServer(async (req, res) => {
   res.setHeader('Content-Security-Policy', "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; base-uri 'none'; object-src 'none'");
   const url = new URL(req.url, 'http://localhost');
   const sendJson = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(data)); return res; };
-  if (url.pathname === '/api/verify' || url.pathname === '/api/evaluate' || url.pathname === '/api/live-proof' || url.pathname === '/api/verify-receipt' || url.pathname === '/api/x402/status' || url.pathname === '/api/x402/quote' || url.pathname === '/api/x402/resource' || url.pathname === '/api/sponsor/status' || url.pathname === '/api/sponsor/supported' || url.pathname === '/api/sponsor/verify' || url.pathname === '/api/sponsor/settle') {
+  if (url.pathname === '/api/verify' || url.pathname === '/api/evaluate' || url.pathname === '/api/live-proof' || url.pathname === '/api/verify-receipt' || url.pathname === '/api/x402/status' || url.pathname === '/api/x402/quote' || url.pathname === '/api/x402/resource' || url.pathname === '/api/sponsor/status' || url.pathname === '/api/sponsor/accounts' || url.pathname === '/api/sponsor/supported' || url.pathname === '/api/sponsor/verify' || url.pathname === '/api/sponsor/settle') {
     let body = null;
     if (req.method === 'POST') {
       const chunks = []; let size = 0;
@@ -30,7 +31,7 @@ const app = createServer(async (req, res) => {
     }
     const adapter = { method: req.method, query: Object.fromEntries(url.searchParams), body, headers: req.headers };
     const response = { setHeader: (k, v) => res.setHeader(k, v), status: status => ({ json: data => sendJson(status, data) }) };
-    return (url.pathname === '/api/verify' ? verify : url.pathname === '/api/live-proof' ? liveProof : url.pathname === '/api/verify-receipt' ? verifyReceipt : url.pathname === '/api/x402/status' ? x402Status : url.pathname === '/api/x402/quote' ? x402Quote : url.pathname === '/api/x402/resource' ? x402Resource : url.pathname === '/api/sponsor/status' ? sponsorStatus : url.pathname === '/api/sponsor/supported' ? sponsorSupported : url.pathname === '/api/sponsor/verify' ? sponsorVerify : url.pathname === '/api/sponsor/settle' ? sponsorSettle : evaluate)(adapter, response);
+    return (url.pathname === '/api/verify' ? verify : url.pathname === '/api/live-proof' ? liveProof : url.pathname === '/api/verify-receipt' ? verifyReceipt : url.pathname === '/api/x402/status' ? x402Status : url.pathname === '/api/x402/quote' ? x402Quote : url.pathname === '/api/x402/resource' ? x402Resource : url.pathname === '/api/sponsor/status' ? sponsorStatus : url.pathname === '/api/sponsor/accounts' ? sponsorAccounts : url.pathname === '/api/sponsor/supported' ? sponsorSupported : url.pathname === '/api/sponsor/verify' ? sponsorVerify : url.pathname === '/api/sponsor/settle' ? sponsorSettle : evaluate)(adapter, response);
   }
   if (!['GET', 'HEAD'].includes(req.method)) return sendJson(405, { error: 'METHOD_NOT_ALLOWED' });
   const file = url.pathname === '/' ? 'index.html' : url.pathname.replace(/^\//, '');
