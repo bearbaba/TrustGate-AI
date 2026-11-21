@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CcdAmount } from '@concordium/web-sdk';
 import { assessSponsorAccounts, inspectSponsorAccounts, sponsorCanProceed } from '../lib/x402-chain-readiness.js';
-import { handleSponsor } from '../lib/x402-facilitator.js';
+import { handleSponsor, makeTrustGateFacilitator } from '../lib/x402-facilitator.js';
 import accountRoute from '../api/sponsor/accounts.js';
 
 const merchant='4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf';
@@ -82,4 +82,17 @@ test('global quota, Redis unavailability or lookup faults fail closed',async()=>
   const fail=await callRoute(conf,{inspectAccounts:async()=>{lookups++;throw Error('RPC_FAIL')}});
   assert.equal(fail.statusCode,503);
   assert.equal(lookups,1);
+});
+
+test('fee-paying SDK is never constructed before on-chain sponsor prerequisite',async()=>{
+  const states=[
+    {status:'ONCHAIN_LOOKUP_UNAVAILABLE',merchantExists:null,sponsorExists:null,sponsorHasAvailableCcd:null},
+    {status:'ACCOUNTS_NOT_READY',merchantExists:true,sponsorExists:true,sponsorHasAvailableCcd:false},
+    {status:'ACCOUNTS_NOT_READY',merchantExists:false,sponsorExists:true,sponsorHasAvailableCcd:true}
+  ];
+  for(const accountStatus of states){
+    await assert.rejects(()=>makeTrustGateFacilitator(conf,{
+      inspectAccounts:async()=>accountStatus
+    }),/SPONSOR_ONCHAIN_PREFLIGHT_FAILED/);
+  }
 });
