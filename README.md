@@ -63,6 +63,10 @@ The `/x402-gateway` page includes an owner-only **HTTP 402 preflight**. When con
 
 The first-party Sponsor adds a separate **eight settlement-call UTC daily cap** atomically enforced in Upstash Redis, in addition to minute quotas. It bounds the number of signing attempts, **not** the CCD fee amount; the sponsor must remain disabled pending funds, key custody, monitoring, reconciliation and a compatible owner-controlled payment signer. See [setup and verification steps](docs/X402_GATEWAY_SETUP.md).
 
+### Sponsor and Merchant on-chain account checks (read-only)
+
+The x402 Gateway includes a **Check on-chain** action backed by `GET /api/sponsor/accounts`. It queries the actual Concordium Testnet account state without connecting a wallet or signing a transaction; a shared Redis rate limit of 15 checks/minute protects the public RPC path. The response distinguishes positive available Sponsor CCD from unavailable RPC, but does **not** claim sufficient gas, matching signing-key ownership, or settled payments. The first-party facilitator also checks Merchant existence and positive Sponsor available balance before constructing its fee-paying signer; any unavailable state fails closed. Sponsor payment flags are still disabled.
+
 ## Production path: real x402 settlement
 
 A genuine Concordium x402 flow has **not** been completed or verified with a real Testnet payment. The official `@x402/concordium` package supports client, server and facilitator components; however, TrustGate cannot claim agent payments or payment authorization without an actual Testnet settlement to a separate receiving account and a verifiable transaction receipt. The [x402 integration checklist](docs/X402_INTEGRATION_PLAN.md) records the necessary steps and strict acceptance criteria.
