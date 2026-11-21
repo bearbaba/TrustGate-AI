@@ -50,7 +50,7 @@ The application now also accepts **Vercel Marketplace Upstash credentials** auto
 
 The original explicit `TRUSTGATE_X402_REDIS_URL` and `TRUSTGATE_X402_REDIS_TOKEN` remain supported. Pairs are matched; a URL from one database is never silently combined with a token from another database.
 
-**Account-level Upstash integration is not the same as connecting Redis to this project.** On 2026-11-21 the Upstash Marketplace integration was installed for the Vercel team but had no attached projects; TrustGate AI exposed only the public Merchant environment variable. To connect an existing database, open **Vercel → TrustGate AI → Storage / Infrastructure → Upstash → Connect Project** and select Production. The provider creates the app credentials in Vercel, so do not paste them into GitHub or chat. A new Production deployment may be needed to load newly added environment variables.
+**Redis Production is connected (verified 2026-11-21).** The dedicated Upstash REST credentials are configured as encrypted `TRUSTGATE_X402_REDIS_URL` and `TRUSTGATE_X402_REDIS_TOKEN` in Vercel Production. The public `/api/x402/status` no longer lists `DURABLE_ATOMIC_REPLAY_STORE` as missing. A concurrent 1-of-4 reservation test was previously reported successful; this is not proof of an on-chain payment. The Redis credentials remain private and are not committed.
 
 A Redis connection, once attached, only marks the replay-store prerequisite ready. **Do not enable actual transactions until the sponsored facilitator, V1 sender-signing client, and independent payment verification work end-to-end.**
 
@@ -62,7 +62,7 @@ The public Concordium Testnet sponsor address supplied on 2026-11-21 is:
 
 It has a valid Concordium Base58Check checksum (version 1), differs from Agent #1323 owner and Merchant, and is stored as `TRUSTGATE_FACILITATOR_SPONSOR_ADDRESS` in Vercel Production. **This does not demonstrate that the account exists on-chain, is funded, or that the server has signing authority.** The private signing key remains deliberately absent. No CCD has been sent, and settlement remains disabled.
 
-**Protocol compatibility correction:** official `@x402/concordium/exact/client` constructs `paymentPayload.payload.signedTransaction.header.sender`; there is no top-level `paymentPayload.payload.sender`. The Gateway and Sponsor now validate the official nested sender and sponsor header without requiring a nonstandard field. Cryptographic sender-signature verification remains the responsibility of the Concordium facilitator SDK.
+**Protocol compatibility correction:** official `@x402/concordium/exact/client` constructs `paymentPayload.payload.signedTransaction.header.sender`; a separate `paymentPayload.payload.sender` field is not required. The Gateway and Sponsor now validate the official nested sender and sponsor header without requiring a nonstandard field. Cryptographic sender-signature verification remains the responsibility of the Concordium facilitator SDK.
 
 ## Optional first-party Concordium Testnet facilitator (source-level v0.8)
 
@@ -94,6 +94,18 @@ Encrypted Production variables, to be set only when ready:
 
 **Important:** This is a source-level facilitator implementation, not a completed live payment system. We have not verified Vercel runtime gRPC settlement, and the separate sender-signing client remains to be implemented. Before enabling public sponsored settlement, include abuse controls, operator incident response, independent transaction verification, rate limiting, and a bounded sponsor balance. The first-party settle and resource functions allow up to 120 seconds on Vercel Fluid Compute, while the HTTP facilitator request has a 75-second deadline. Vercel function timeouts during settlement can produce an *ambiguous outcome*, leaving replay reservations locked for manual reconciliation. Do not claim real payment success without a block-explorer-confirmed Testnet transaction.
 
+## Sponsor abuse limits (source-level safeguard; not yet enabled on Production)
+
+Once the sponsor endpoints are explicitly enabled, every authenticated `/supported`, `/verify` and `/settle` call must obtain an atomic Redis quota before executing the x402 SDK. Quotas are shared across Vercel instances, not per-instance in-memory counters:
+
+| Endpoint | Total per one-minute bucket |
+|---|---:|
+| `GET /api/sponsor/supported` | 30 |
+| `POST /api/sponsor/verify` | 24 |
+| `POST /api/sponsor/settle` | 4 |
+
+A single Upstash `EVAL` performs `INCR` and sets an expiry for each global counter. Exceeded quotas return HTTP 429. Redis errors or ambiguous results return HTTP 503 and never invoke sponsor signing. Limits intentionally favor this single-owner Testnet demo, not public payment throughput. Counters contain no personal identifiers or credentials. This control does **not** replace spending caps, key custody, transaction reconciliation, or monitoring; only authorize sponsorship after all those controls are reviewed. No sponsor gas or payment is charged by this readiness work.
+
 ## Important limitations and required manual tests
 
 - The public browser page is a **readiness and quote inspector**, not a client that signs Concordium V1 sponsored transfers. A future paying client must use the official `@x402/concordium/exact/client` scheme in an owner-controlled secure wallet environment. Never enter a wallet private key on this page.
@@ -119,7 +131,7 @@ Open https://trustgate-ai.vercel.app/x402-gateway to inspect readiness. The gate
 - [x] First-party official SDK facilitator source and authorization gates (v0.8, **locked, not funded or live tested**)
 - [x] Distinct third Testnet sponsor **public account address** configured on Vercel (checksum validated, not proven funded)
 - [ ] Sponsor funded with test CCD, securely installed signing key, and real `/supported` smoke test
-- [ ] Secure Redis credentials configured, with a separate reconciliation plan
+- [x] Secure Redis credentials connected to Vercel Production (reconciliation plan still required)
 - [ ] Paying client with owner-controlled V1 sponsored transaction signing
 - [ ] Actual successful Testnet transfer to merchant, on-chain transaction independently verified
 - [ ] Operational monitoring, reconciliation, rate limiting and independent settlement check

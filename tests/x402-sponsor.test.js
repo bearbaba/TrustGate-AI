@@ -48,7 +48,7 @@ async function call(path,method,token,requestBody,options={}){
   await handleSponsor({method,body:requestBody,headers:{
     authorization:token?'Bearer '+token:undefined,
     'content-type':'application/json'
-  }},res,{config,path,...options});
+  }},res,{config,path,rateLimit:async()=>true,...options});
   return res.out;
 }
 const fakeEngine={
@@ -173,6 +173,22 @@ test('invalid JSON, oversized bodies and unsupported request methods fail closed
   const m=await call('/api/sponsor/supported','POST',authToken,null,{makeEngine:async()=>fakeEngine});
   assert.equal(m.statusCode,405);
 });
+test('sponsor limits fail closed before invoking the official SDK',async()=>{
+  let engines=0;
+  const loader=async()=>{engines++;return fakeEngine;};
+  const limit=await call('/api/sponsor/settle','POST',authToken,body(),{
+    makeEngine:loader,rateLimit:async()=>false
+  });
+  assert.equal(limit.statusCode,429);
+  assert.equal(limit.data.error,'SPONSOR_RATE_LIMIT_EXCEEDED');
+  const unavailable=await call('/api/sponsor/verify','POST',authToken,body(),{
+    makeEngine:loader,rateLimit:async()=>{throw Error('redis_down');}
+  });
+  assert.equal(unavailable.statusCode,503);
+  assert.equal(unavailable.data.error,'SPONSOR_RATE_LIMIT_UNAVAILABLE');
+  assert.equal(engines,0);
+});
+
 test('offline startup imports official facilitator and Concordium sponsor classes',async()=>{
   const [{x402Facilitator},{ExactConcordiumScheme},{toConcordiumFacilitatorSigner}]=await Promise.all([
     import('@x402/core/facilitator'),import('@x402/concordium/exact/facilitator'),
