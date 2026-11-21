@@ -175,3 +175,6 @@ inspectButton?.addEventListener('click',inspectSubmitted);
 // The Gateway refresh button also rechecks Sponsor readiness. The existing
 // Gateway script dispatches this after its public status request resolves.
 document.addEventListener('trustgate:gateway-status-refreshed',refreshWalletReadiness);
+document.addEventListener('DOMContentLoaded',()=>{
+  if(readinessSerial===0)refreshWalletReadiness();
+});
