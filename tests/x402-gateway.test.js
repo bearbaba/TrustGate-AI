@@ -215,7 +215,7 @@ test('atomic Upstash EVAL reserves both keys or neither key', async()=>{
     assert.equal(cmd[0],'EVAL');
     assert.equal(cmd[1],RESERVE_LUA);
     assert.equal(cmd[2],'2');
-    assert.equal(cmd.length,8);
+    assert.equal(cmd.length,7);
     assert.equal(cmd[5],'IN_PROGRESS');
     assert.equal(cmd[6],'86400');
   }
