@@ -38,6 +38,21 @@ test('Sponsor limits use one atomic Redis Lua EVAL with bounded quota',async()=>
   }
 });
 
+test('Read-only account inspection is rate-limited even while sponsor is locked',async()=>{
+  const requests=[];
+  const closedConfig={...config,configured:false};
+  assert.equal(await enforceSponsorRateLimit(closedConfig,'accounts',{
+    now:Date.UTC(2026,10,21,6,0,0),fetchImpl:mock(1,requests)
+  }),true);
+  const cmd=JSON.parse(requests[0].init.body);
+  assert.equal(cmd[2],'1');
+  assert.match(cmd[3],/^tg:x402:sponsor:limit:accounts:\\d+$/);
+  assert.deepEqual(cmd.slice(4),['120','15']);
+  await assert.rejects(()=>enforceSponsorRateLimit(closedConfig,'settle',{
+    fetchImpl:mock(1,[])
+  }));
+});
+
 test('Exceeded minute or daily quota rejects calls and never assumes success',async()=>{
   assert.equal(await enforceSponsorRateLimit(config,'settle',{fetchImpl:mock(0,[])}),false);
   assert.equal(await enforceSponsorRateLimit(config,'verify',{fetchImpl:mock('0',[])}),false);
