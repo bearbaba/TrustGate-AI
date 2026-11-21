@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   deriveSponsorPublicKey,assessSponsorSigningAuthority,inspectSponsorSigningAuthority
 } from '../lib/x402-sponsor-authority.js';
-import { makeTrustGateFacilitator } from '../lib/x402-facilitator.js';
+import { makeTrustGateFacilitator, handleSponsor } from '../lib/x402-facilitator.js';
 
 // RFC 8032 Section 7.1, Ed25519 test vector 1, public data only.
 // This is NOT a TrustGate key and never belongs in Production.
@@ -95,4 +95,53 @@ test('funded sponsor alone cannot construct fee-payer signer when key is unautho
     }
   }),/SPONSOR_KEY_AUTHORITY_UNVERIFIED/);
   assert.equal(calls,2);
+});
+
+test('public accounts endpoint can verify Sponsor key without leaking secret or derived public key',async()=>{
+  const config={address,privateKey:seed,merchant:'4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf'};
+  let checked=0;
+  const obj={statusCode:null,data:null,headers:{}};
+  const res={
+    setHeader:(k,v)=>{obj.headers[k]=v;},
+    status:(code)=>{obj.statusCode=code;return{json:(data)=>{obj.data=data;return obj;}}}
+  };
+  await handleSponsor({method:'GET',headers:{}},res,{
+    config,path:'/api/sponsor/accounts',
+    rateLimit:async()=>true,
+    inspectAccounts:async()=>({
+      status:'ACCOUNTS_PRESENT_SPONSOR_HAS_CCD',merchantExists:true,
+      sponsorExists:true,sponsorHasAvailableCcd:true
+    }),
+    inspectSigningAuthority:async()=>{checked++;return{ok:true,code:'SPONSOR_ONCHAIN_SIGNING_KEY_VERIFIED'};}
+  });
+  assert.equal(obj.statusCode,200);
+  assert.equal(obj.data.signingKeyVerified,true);
+  assert.equal(obj.data.signingKeyStatus,'SPONSOR_ONCHAIN_SIGNING_KEY_VERIFIED');
+  assert.equal(obj.data.settlementVerified,undefined);
+  assert.equal(checked,1);
+  const response=JSON.stringify(obj.data);
+  assert.equal(response.includes(seed),false);
+  assert.equal(response.includes(expectedPublic),false);
+});
+
+test('public accounts endpoint never labels an unfunded/unchecked key as verified',async()=>{
+  const config={address,privateKey:seed,merchant:'4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf'};
+  const obj={statusCode:null,data:null};
+  const res={
+    setHeader:()=>{},
+    status:(code)=>{obj.statusCode=code;return{json:(data)=>{obj.data=data;return obj;}}}
+  };
+  let invoked=0;
+  await handleSponsor({method:'GET',headers:{}},res,{
+    config,path:'/api/sponsor/accounts',
+    rateLimit:async()=>true,
+    inspectAccounts:async()=>({
+      status:'ACCOUNTS_NOT_READY',merchantExists:true,
+      sponsorExists:false,sponsorHasAvailableCcd:false
+    }),
+    inspectSigningAuthority:async()=>{invoked++;return{ok:true};}
+  });
+  assert.equal(obj.data.signingKeyVerified,false);
+  assert.equal(obj.data.signingKeyStatus,'SPONSOR_KEY_NOT_CONFIGURED');
+  assert.equal(invoked,0);
 });
