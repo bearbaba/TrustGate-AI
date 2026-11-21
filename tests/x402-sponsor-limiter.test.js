@@ -72,3 +72,19 @@ test('Redis failure, indeterminate answers and missing config always fail closed
   await assert.rejects(()=>enforceSponsorRateLimit({...config,configured:false},'settle'));
   await assert.rejects(()=>enforceSponsorRateLimit(config,'unknown'));
 });
+
+test('wallet preparation is limited to two per minute and four per day',async()=>{
+  const requests=[];
+  assert.equal(await enforceSponsorRateLimit(config,'prepare',{
+    now:Date.UTC(2026,10,21,6,0,0),
+    fetchImpl:mock(1,requests)
+  }),true);
+  const cmd=JSON.parse(requests[0].init.body);
+  assert.equal(cmd[2],'2');
+  assert.match(cmd[3],/^tg:x402:sponsor:limit:prepare:\d+$/);
+  assert.match(cmd[4],/^tg:x402:sponsor:daily-prepare:\d+$/);
+  assert.deepEqual(cmd.slice(5),['120','2','172800','4']);
+  assert.equal(await enforceSponsorRateLimit(config,'prepare',{
+    fetchImpl:mock(0,[])
+  }),false);
+});
