@@ -16,6 +16,8 @@
 <div class="x402-details"><div><small>CHAIN</small><strong>Concordium Testnet</strong></div><div><small>ASSET</small><strong>Native CCD</strong></div><div><small>FIXED QUOTE</small><strong id="gatewayPrice">0.1 Testnet CCD</strong></div><div><small>MERCHANT</small><strong id="merchantState">Unconfigured</strong></div></div>
 <div id="readinessChecks" class="x402-checks"></div>
 <p class="x402-help">This readiness report never exposes private keys, facilitator secrets, Redis tokens or payment signatures. A configured gateway still requires a live /supported handshake before a payment challenge can be issued.</p>
+<div class="x402-head"><div><small>PUBLIC TESTNET ACCOUNT CHECK</small><h2>Merchant &amp; Sponsor on-chain readiness</h2></div><button class="outline" type="button" id="chainCheck">Check on-chain ↗</button></div>
+<div id="chainStatus" class="status" role="status" aria-live="polite">Not checked. Read-only; no wallet or signature needed.</div>
 </section>
 <section class="panel x402-panel"><div class="x402-head"><div><small>02 / OFFICIAL PROTOCOL</small><h2>x402 payment requirements</h2></div></div>
 <p>A configured server builds its requirements using <code>@x402/core</code> and <code>@x402/concordium</code>. It advertises exact Testnet CCD amount, merchant address and an actual sponsor announced by the facilitator. This is not a simulated paid checkout.</p>

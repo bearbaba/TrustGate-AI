@@ -48,3 +48,29 @@ $('testQuote').addEventListener('click',async()=>{
   finally{$('testQuote').disabled=!enabled;}
 });
 getStatus();
+
+async function checkChainAccounts(){
+  const button=$('chainCheck');
+  button.disabled=true;
+  $('chainStatus').className='status';
+  $('chainStatus').textContent='Reading Concordium Testnet accounts (no wallet signature)…';
+  try{
+    const response=await fetch('/api/sponsor/accounts',{cache:'no-store'});
+    const body=await response.json();
+    if(!response.ok){
+      const code=body.error||'CHAIN_STATUS_UNAVAILABLE';
+      throw Error(code);
+    }
+    const ready=body.status==='ACCOUNTS_PRESENT_SPONSOR_HAS_CCD';
+    $('chainStatus').className='status '+(ready?'good':'bad');
+    $('chainStatus').textContent=ready?
+      'Both accounts exist on Testnet and Sponsor has nonzero available CCD. Signing key and fee sufficiency are NOT verified; payments remain locked.':
+      body.status==='ONCHAIN_LOOKUP_UNAVAILABLE'?
+        'RPC unavailable: account existence and funding cannot be confirmed. Gateway remains locked.':
+        'Not ready: Merchant and Sponsor must be on-chain and Sponsor must have available Testnet CCD. Status: '+body.status;
+  }catch(error){
+    $('chainStatus').className='status bad';
+    $('chainStatus').textContent='Account status unavailable: '+(error?.message||'network error');
+  }finally{button.disabled=false;}
+}
+$('chainCheck').addEventListener('click',checkChainAccounts);
