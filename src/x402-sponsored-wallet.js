@@ -80,7 +80,7 @@ async function submitSponsoredWalletTransfer(){
     if(!signature || typeof signature!=='object'||Array.isArray(signature))
       throw Error('INVALID_OWNER_MESSAGE_SIGNATURE');
     report('Preparing one sponsor-signed 0.1 Testnet CCD transfer (no CCD has moved yet)…');
-    const response=await getJson('/api/x402/browser-prepare',{
+    const response=await getJson('/api/x402/resource?mode=browser-prepare',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({intent:{...intent,signature}})
     });
@@ -115,7 +115,7 @@ async function inspectSubmitted(){
   inspectButton.disabled=true;
   try{
     report('Checking independent finalization on Concordium Testnet…');
-    const proof=await getJson('/api/x402/browser-inspect?hash='+encodeURIComponent(submittedHash));
+    const proof=await getJson('/api/x402/resource?mode=browser-inspect&hash='+encodeURIComponent(submittedHash));
     output.textContent=JSON.stringify(proof,null,2);
     report(proof.verified?
       'Finalized 0.1 Testnet CCD transfer matches sender, Merchant and Sponsor. This is native wallet payment proof, not a completed x402 exact resource claim.':
