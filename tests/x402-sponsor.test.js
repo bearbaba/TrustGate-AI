@@ -9,9 +9,8 @@ import sponsorVerify from '../api/sponsor/verify.js';
 import sponsorSettle from '../api/sponsor/settle.js';
 
 const merchant='4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf';
-// Checksum-valid deterministic TEST FIXTURE. No private key or on-chain
-// sponsor account is associated with this address.
-const sponsor='4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2ftwV2W';
+// Production sponsor address is public. The test-only key below is NOT this account's key.
+const sponsor='4Q9ZNet1wKBCS3HWYxBSrHjKPfyois52h3gYUUHKe8Fw4Cf3s3';
 const authToken='unit-test-secret-with-more-than-32-characters';
 const env={
   TRUSTGATE_X402_ENABLED:'testnet',
@@ -33,7 +32,7 @@ function body(req=allowed) {
     paymentRequirements:req,
     paymentPayload:{
       x402Version:2,accepted:req,
-      payload:{sender:PROOF_CONTEXT.owner,signedTransaction:{
+      payload:{signedTransaction:{
         version:1,header:{sender:PROOF_CONTEXT.owner,sponsor:{account:sponsor}}
       }}
     }
@@ -109,14 +108,20 @@ test('SDK request restrictions prevent cross-network, wrong owner, payee, amount
     body({...allowed,maxTimeoutSeconds:120}),
     {...body(),x402Version:1},
     {...body(),paymentPayload:{...body().paymentPayload,
-      payload:{...body().paymentPayload.payload,sender:merchant}}},
-    {...body(),paymentPayload:{...body().paymentPayload,
       accepted:{...allowed,extra:{feePayer:merchant}}}},
     {...body(),paymentPayload:{...body().paymentPayload,
       payload:{...body().paymentPayload.payload,
         signedTransaction:{version:1,header:{sender:merchant,sponsor:{account:sponsor}}}}}}
   ];
   for(const input of cases)assert.equal(validateSponsorPayment(input,config),false);
+});
+test('official Concordium V2 client structure without payload.sender is accepted',()=>{
+  const p=body();
+  assert.equal(p.paymentPayload.payload.sender,undefined);
+  assert.equal(validateSponsorPayment(p,config),true);
+  const tx=p.paymentPayload.payload.signedTransaction;
+  assert.equal(tx.header.sender,PROOF_CONTEXT.owner);
+  assert.equal(tx.header.sponsor.account,sponsor);
 });
 test('bearer authentication is mandatory for supported, verify and settle',async()=>{
   let engines=0;

@@ -44,7 +44,12 @@ const makeOffer=(options={})=>async()=>({
   }
 });
 const auth=()=>Buffer.from(JSON.stringify(makeIntent())).toString('base64');
-const payment=()=>({x402Version:2,accepted:requirements,payload:{sender:PROOF_CONTEXT.owner}});
+const payment=()=>({x402Version:2,accepted:requirements,payload:{
+  // Official exact/client/scheme.ts: signedTransaction is the sole payload
+  signedTransaction:{version:1,header:{
+    sender:PROOF_CONTEXT.owner,sponsor:{account:requirements.extra.feePayer}
+  }}
+}});
 const wire=(p=payment())=>Buffer.from(JSON.stringify(p)).toString('base64');
 const deps={
   config,now:NOW,makeServer:makeOffer(),accountLookup:async()=>({fixture:true}),
@@ -161,6 +166,38 @@ test('wrong recipient/payment amount or chain rejected without settlement',async
   assert.equal(r.statusCode,402);
   assert.equal(r.data.error,'PAYMENT_REQUIREMENTS_MISMATCH');
   assert.equal(calls,0);
+});
+test('official Concordium exact payload has no redundant sender field',async()=>{
+  const p=payment();
+  assert.equal(p.payload.sender,undefined);
+  assert.equal(p.payload.signedTransaction.header.sender,PROOF_CONTEXT.owner);
+  const r=await call('/api/x402/resource',{'x-trustgate-intent':auth(),
+    'payment-signature':wire(p)});
+  assert.equal(r.statusCode,200);
+  assert.equal(r.data.kind,'PAID_VERIFIED_AGENT_EVIDENCE');
+});
+test('refuses forged transaction sender or sponsor before facilitator and Redis',async()=>{
+  let touched=0;
+  const forged=[
+    {header:{sender:merchant,sponsor:{account:requirements.extra.feePayer}}},
+    {header:{sender:PROOF_CONTEXT.owner,sponsor:{account:merchant}}},
+    {version:0}
+  ];
+  for(const modify of forged){
+    const p=payment();
+    p.payload.signedTransaction={
+      ...p.payload.signedTransaction,
+      ...modify
+    };
+    const r=await call('/api/x402/resource',{'x-trustgate-intent':auth(),
+      'payment-signature':wire(p)},{
+      makeServer:makeOffer({verifyPayment:async()=>{touched++;return {isValid:true};}}),
+      reserve:async()=>{touched++;return {ok:true,keys:{}};}
+    });
+    assert.equal(r.statusCode,402);
+    assert.equal(r.data.error,'PAYMENT_REQUIREMENTS_MISMATCH');
+  }
+  assert.equal(touched,0);
 });
 test('facilitator invalid payment cannot be settled',async()=>{
   let calls=0;

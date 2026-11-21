@@ -53,6 +53,8 @@ The gateway now includes an optional **self-hosted, first-party sponsored-transa
 
 **This is source-level work, not confirmed Testnet settlement.** A third funded Testnet sponsor wallet, securely installed signing credential, confirmed gRPC connectivity, rate limiting, paying client and a real on-chain transaction are still required. Existing wallet keys are never reused or silently requested.
 
+The third **public Sponsor Testnet account** is configured in Vercel Production (`4Q9ZNet1wKBCS3HWYxBSrHjKPfyois52h3gYUUHKe8Fw4Cf3s3`). Its private key, balance and on-chain authorization have not been verified. SDK compatibility now follows the official `payload.signedTransaction.header.sender` layout (not a made-up `payload.sender` field). Settlement remains locked.
+
 Read [the sponsor configuration and acceptance criteria](docs/X402_GATEWAY_SETUP.md).
 
 ## Production path: real x402 settlement
