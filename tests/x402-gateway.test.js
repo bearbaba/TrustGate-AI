@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readX402Config, publicX402Status, buildX402SignedMessage, validateX402Intent, X402_TESTNET } from '../lib/x402-config.js';
 import { handleX402 } from '../lib/x402-gateway.js';
-import { replayKeys, reserveX402Payment } from '../lib/x402-store.js';
+import { replayKeys, reserveX402Payment, markX402Settled, RESERVE_LUA, MARK_SETTLED_LUA } from '../lib/x402-store.js';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
 
 const merchant='4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf';
@@ -199,19 +199,60 @@ test('replayed signed intent or unavailable durable store prevents settlement',a
   }
   assert.equal(settlementCalls,0);
 });
-test('atomic Upstash reservations reject double use of the same payment',async()=>{
+test('atomic Upstash EVAL reserves both keys or neither key', async()=>{
   const commands=[];
-  const stub=async(_url,options)=>{
+  const fake=async(_url,options)=>{
     const cmd=JSON.parse(options.body);commands.push(cmd);
-    return {ok:true,json:async()=>({result:commands.length===1?'OK':null})};
+    return {ok:true,json:async()=>({result:commands.length===1?1:0})};
   };
-  const result=await reserveX402Payment(config,makeIntent(),payment(),stub);
-  assert.equal(result.ok,false);
-  assert.equal(result.code,'PAYMENT_REPLAY_OR_IN_PROGRESS');
-  assert.equal(commands[0][0],'SET');
-  assert.equal(commands[0][commands[0].length-1],'NX');
+  const accepted=await reserveX402Payment(config,makeIntent(),payment(),fake);
+  assert.equal(accepted.ok,true);
+  const refused=await reserveX402Payment(config,makeIntent(),payment(),fake);
+  assert.equal(refused.ok,false);
+  assert.equal(refused.code,'INTENT_OR_PAYMENT_REPLAY');
+  assert.equal(commands.length,2);
+  for(const cmd of commands){
+    assert.equal(cmd[0],'EVAL');
+    assert.equal(cmd[1],RESERVE_LUA);
+    assert.equal(cmd[2],'2');
+    assert.equal(cmd.length,8);
+    assert.equal(cmd[5],'IN_PROGRESS');
+    assert.equal(cmd[6],'86400');
+  }
   const keys=replayKeys(makeIntent(),payment());
   assert.notEqual(keys.intentKey,keys.paymentKey);
+});
+test('atomic settlement transition requires both keys reserved and matching',async()=>{
+  const keys=replayKeys(makeIntent(),payment());
+  const calls=[];
+  const fake=async(_url,options)=>{
+    calls.push(JSON.parse(options.body));
+    return {ok:true,json:async()=>({result:calls.length===1?1:0})};
+  };
+  const hash='b'.repeat(64);
+  assert.equal(await markX402Settled(config,keys,hash,fake),true);
+  await assert.rejects(markX402Settled(config,keys,hash,fake),/SETTLEMENT_PERSISTENCE_FAILED/);
+  assert.equal(calls.length,2);
+  const cmd=calls[0];
+  assert.equal(cmd[0],'EVAL');
+  assert.equal(cmd[1],MARK_SETTLED_LUA);
+  assert.equal(cmd[2],'2');
+  assert.equal(cmd[5],'IN_PROGRESS');
+  assert.equal(cmd[6],JSON.stringify({status:'SETTLED',transaction:hash}));
+  assert.equal(cmd[7],'604800');
+});
+test('Redis unavailable or indeterminate EVAL blocks settlement, no accidental success',async()=>{
+  for (const response of [
+    {ok:false},
+    {ok:true,json:async()=>({result:undefined})},
+    {ok:true,json:async()=>({error:'unknown command EVAL'})}
+  ]) {
+    await assert.rejects(
+      reserveX402Payment(config,makeIntent(),payment(),async()=>response)
+    );
+  }
+  const keys=replayKeys(makeIntent(),payment());
+  await assert.rejects(markX402Settled(config,keys,'bad',async()=>({ok:true})),/INVALID_SETTLEMENT_RECORD/);
 });
 test('x402 SDK is installed and exposes the official server and Concordium scheme',async()=>{
   const [{x402ResourceServer,HTTPFacilitatorClient},{ExactConcordiumScheme}] = await Promise.all([

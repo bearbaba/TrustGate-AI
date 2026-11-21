@@ -39,7 +39,7 @@ The authenticated service is deliberately **public/read-only**. It demonstrates 
 
 ## x402 Testnet gateway (v0.7 — disabled until configured)
 
-The x402 gateway now contains a **source-level testnet resource endpoint**, using the official `@x402/core` and `@x402/concordium` sponsored-transaction server scheme. It checks a separate owner-signed exact-chain, exact-merchant, exact-price intent; verifies Agent #1323; issues an official HTTP 402 challenge only after a real facilitator /supported handshake; verifies a sponsored payment payload; and requires atomic shared replay locks before settlement.
+The x402 gateway now contains a **source-level testnet resource endpoint**, using the official `@x402/core` and `@x402/concordium` sponsored-transaction server scheme. It checks a separate owner-signed exact-chain, exact-merchant, exact-price intent; verifies Agent #1323; issues an official HTTP 402 challenge only after a real facilitator /supported handshake; verifies a sponsored payment payload; and requires atomic Redis Lua `EVAL` to reserve both replay keys before settlement.
 
 **The live environment is not yet configured for merchant payments, and NO actual x402 payment has been demonstrated.** The separate Merchant Testnet public address has now been provided and configured on Vercel Production: `4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf`. A compatible sponsor/facilitator and shared durable Redis are still required, and payment remains disabled. The public page deliberately shows a LOCKED gateway until those are set. A wallet `signMessage` is not a payment signature; client-side sponsored transaction signing is also still to be built.
 

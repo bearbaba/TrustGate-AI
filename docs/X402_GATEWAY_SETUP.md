@@ -58,7 +58,7 @@ A Redis connection, once attached, only marks the replay-store prerequisite read
 
 - The public browser page is a **readiness and quote inspector**, not a client that signs Concordium V1 sponsored transfers. A future paying client must use the official `@x402/concordium/exact/client` scheme in an owner-controlled secure wallet environment. Never enter a wallet private key on this page.
 - The HTTP 402 and settlement paths have mock-backed automated tests. **No real Testnet payment has yet been made or observed in CCDExplorer**.
-- An Upstash reservation prevents concurrent/replayed use of an intent and payment payload, but an ambiguous settlement leaves locks in place and requires **manual transaction reconciliation**. This is deliberately fail-closed. There is no automated recovery portal yet.
+- A single atomic Upstash Redis Lua `EVAL` reserves the intent and payment keys together; the settlement record transition is also atomic and conditioned on both keys remaining reserved. An ambiguous settlement leaves locks in place and requires **manual transaction reconciliation**. This is deliberately fail-closed. There is no automated recovery portal yet.
 - Storage must be reliable and atomic; serverless in-memory Maps are insufficient. Rate limits, monitoring and merchant reconciliation should be added before operating a public paid service.
 - The response relies on the *configured facilitator's verified and finalized settlement result*. A production launch should independently cross-check transaction finalization with Concordium gRPC and provide settlement observability.
 - The unpaid owner-signed message is **not** a transfer authorization. The payment signature must be produced separately by the owner-controlled payment client. Review sponsor and payee before signing.
@@ -73,7 +73,7 @@ Open https://trustgate-ai.vercel.app/x402-gateway to inspect readiness. The gate
 - [x] Fail-closed gate, separate merchant requirement, fixed Testnet CCD unit checks
 - [x] Official Concordium x402 server SDK integration, facilitator-supported sponsor discovery
 - [x] Scoped wallet-ownership signature distinct from sponsored transfer signature
-- [x] Atomic shared nonce/payload reserve and post-settlement persistence code
+- [x] **Atomic Redis Lua EVAL** reserving both nonce/payment keys and atomically persisting settlement (requires real Redis smoke test after connecting)
 - [x] Mock-backed tests of 402, verify, replay rejection and settlement prerequisite
 - [x] Merchant Testnet public address supplied and saved to Vercel Production (checksum validated; on-chain existence/ownership not independently verified)
 - [ ] Compatible sponsored facilitator set up, verified and funded (if required)
