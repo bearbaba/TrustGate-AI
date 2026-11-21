@@ -46,7 +46,7 @@ test('Read-only account inspection is rate-limited even while sponsor is locked'
   }),true);
   const cmd=JSON.parse(requests[0].init.body);
   assert.equal(cmd[2],'1');
-  assert.match(cmd[3],/^tg:x402:sponsor:limit:accounts:\\d+$/);
+  assert.match(cmd[3],/^tg:x402:sponsor:limit:accounts:\d+$/);
   assert.deepEqual(cmd.slice(4),['120','15']);
   await assert.rejects(()=>enforceSponsorRateLimit(closedConfig,'settle',{
     fetchImpl:mock(1,[])
