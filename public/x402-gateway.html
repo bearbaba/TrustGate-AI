@@ -4,7 +4,7 @@
 <meta name="description" content="TrustGate AI x402 Concordium Testnet gateway — configuration and safety status.">
 <title>TrustGate AI — x402 Payment Gateway</title>
 <link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/x402-gateway.css">
-<script src="/x402-gateway.js" defer></script></head>
+<script src="/x402-gateway.js" defer></script><script src="/x402-preflight.js" defer></script></head>
 <body><main class="x402-wrap">
 <a class="back" href="/">← TrustGate AI / Decision Lab</a>
 <div class="eyebrow">CONCORDIUM · X402 EXACT · TESTNET ONLY</div>
@@ -22,11 +22,17 @@
 <button class="outline" id="testQuote" type="button" disabled>Inspect protocol quote ↗</button>
 <pre id="quoteResult" class="x402-output">Gateway is locked until configured.</pre>
 </section>
-<section class="panel x402-panel"><div class="x402-head"><div><small>03 / TRUSTGATE PAYMENT BOUNDARY</small><h2>Identity → Policy → Settlement</h2></div></div>
+<section class="panel x402-panel"><div class="x402-head"><div><small>03 / OWNER-WALLET CHALLENGE PREFLIGHT</small><h2>Verify the HTTP 402 boundary</h2></div></div>
+<p>Once the sponsor is configured, the registered Agent #1323 owner can connect Concordium Wallet, sign a <strong>non-payment access request</strong>, and inspect a verified HTTP 402 challenge. This action does not sign or broadcast any transaction, charge CCD, or grant spending authority. While the gateway is locked, no wallet popup is requested.</p>
+<button class="outline" id="inspectChallenge" type="button">Check owner-signed HTTP 402 ↗</button>
+<div id="challengeStatus" class="status" role="status" aria-live="polite">Safe preflight available; currently blocked by backend configuration.</div>
+<pre id="challengeResult" class="x402-output" aria-label="Public payment requirements only"></pre>
+</section>
+<section class="panel x402-panel"><div class="x402-head"><div><small>04 / TRUSTGATE PAYMENT BOUNDARY</small><h2>Identity → Policy → Settlement</h2></div></div>
 <div class="x402-sequence"><div><b>01</b><strong>Verify identity</strong><small>Agent #1323 Active, signed owner intent</small></div><div><b>02</b><strong>Enforce policy</strong><small>Exact merchant + 0.1 Testnet CCD</small></div><div><b>03</b><strong>Confirm sponsor</strong><small>Official /supported handshake, no guessed fee payer</small></div><div><b>04</b><strong>Settle or deny</strong><small>Atomic nonce reservation and finalized receipt</small></div></div>
 <p>The payment-signature is a separate wallet transaction signature. Your existing gasless Live Proof signature cannot authorize a money transfer.</p>
 </section>
 <div class="x402-bottom">
-<p><strong>Scope:</strong> payment handling is disabled on this deployment until a separate Testnet merchant wallet, a functioning Concordium Testnet facilitator and durable Redis are configured. This page does not collect wallet seeds or take payments. A real x402 Testnet settlement is still pending and requires explicit user-controlled signing.</p>
+<p><strong>Scope:</strong> the Merchant and dedicated Redis are configured; settlement remains disabled until the Sponsor is securely keyed, funded and verified. This page does not collect wallet seeds or take payments. A real x402 Testnet settlement is still pending and requires explicit user-controlled signing.</p>
 <a href="https://github.com/bearbaba/TrustGate-AI/blob/main/docs/X402_GATEWAY_SETUP.md" target="_blank" rel="noopener noreferrer">Gateway configuration and security checklist ↗</a>
 </div></main></body></html>
