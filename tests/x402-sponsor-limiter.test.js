@@ -24,36 +24,9 @@ test('Sponsor limits use one atomic Redis Lua EVAL with bounded quota',async()=>
     const cmd=JSON.parse(requests.at(-1).init.body);
     assert.deepEqual(cmd.slice(0,2),['EVAL',SPONSOR_RATE_LIMIT_LUA]);
     assert.equal(cmd[2],action==='settle'?'2':'1');
-    assert.match(cmd[3],new RegExp('^tg:x402:sponsor:limit:'+action+':\\d+
-    assert.equal(requests.at(-1).init.method,'POST');
-    assert.equal(requests.at(-1).init.redirect,'error');
-    assert.equal(requests.at(-1).init.headers.Authorization,'Bearer test-only-token');
-    assert.equal(cmd[3].includes(config.redisToken),false);
-  }
-});
-
-test('Exceeded minute or daily quota rejects calls and never assumes success',async()=>{
-  assert.equal(await enforceSponsorRateLimit(config,'settle',{fetchImpl:mock(0,[])}),false);
-  assert.equal(await enforceSponsorRateLimit(config,'verify',{fetchImpl:mock('0',[])}),false);
-});
-
-test('Redis failure, indeterminate answers and missing config always fail closed',async()=>{
-  await assert.rejects(()=>enforceSponsorRateLimit(config,'verify',{
-    fetchImpl:async()=>({ok:false,status:503})
-  }));
-  await assert.rejects(()=>enforceSponsorRateLimit(config,'verify',{
-    fetchImpl:async()=>({ok:true,json:async()=>({error:'down'})})
-  }));
-  await assert.rejects(()=>enforceSponsorRateLimit(config,'verify',{
-    fetchImpl:async()=>({ok:true,json:async()=>({result:null})})
-  }));
-  await assert.rejects(()=>enforceSponsorRateLimit({...config,redisToken:''},'settle'));
-  await assert.rejects(()=>enforceSponsorRateLimit({...config,configured:false},'settle'));
-  await assert.rejects(()=>enforceSponsorRateLimit(config,'unknown'));
-});
-));
+    assert.match(cmd[3],new RegExp('^tg:x402:sponsor:limit:'+action+':\\d+$'));
     if(action==='settle'){
-      assert.match(cmd[4],/^tg:x402:sponsor:daily-settle:\\d+$/);
+      assert.match(cmd[4],/^tg:x402:sponsor:daily-settle:\d+$/);
       assert.deepEqual(cmd.slice(5),['120','4','172800','8']);
     }else{
       assert.deepEqual(cmd.slice(4),['120',String(limit)]);
@@ -65,7 +38,7 @@ test('Redis failure, indeterminate answers and missing config always fail closed
   }
 });
 
-test('Exceeded quota rejects calls and never assumes success',async()=>{
+test('Exceeded minute or daily quota rejects calls and never assumes success',async()=>{
   assert.equal(await enforceSponsorRateLimit(config,'settle',{fetchImpl:mock(0,[])}),false);
   assert.equal(await enforceSponsorRateLimit(config,'verify',{fetchImpl:mock('0',[])}),false);
 });
