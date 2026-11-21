@@ -33,9 +33,9 @@
 <section class="panel x402-panel"><div class="x402-head"><div><small>04 / NATIVE CONCORDIUM WALLET PAYMENT</small><h2>Owner-approved sponsored Testnet transfer</h2></div></div>
 <p>This path uses the official <strong>Concordium Wallet</strong> sponsor-first transaction flow: the server signs the fee sponsor portion and <strong>your wallet explicitly reviews, signs and submits</strong> the 0.1 Testnet CCD transfer. No wallet seed, export or private key is requested. The button stays fail-closed until signed Sponsor and gateway prerequisites pass.</p>
 <p><strong>Important:</strong> this is a <em>native sponsored CCD checkout</em>, separate from the sender-first <code>@x402/concordium/exact/client</code> payload. A verified transfer here is not yet the x402 paid-resource protocol.</p>
-<button class="outline" id="sponsoredWalletSend" type="button">Review and sign 0.1 Testnet CCD in Wallet ↗</button>
+<button class="outline" id="sponsoredWalletSend" type="button" disabled>Checking payment prerequisites…</button>
 <button class="outline" id="sponsoredInspect" type="button" disabled>Verify finalized transfer ↗</button>
-<div class="status" id="sponsoredWalletStatus" role="status" aria-live="polite">Gateway locked until Sponsor signing credentials are securely provisioned. No signature is requested while locked.</div>
+<div class="status" id="sponsoredWalletStatus" role="status" aria-live="polite">Checking live Gateway configuration and Sponsor signing-key ownership. No wallet popup while locked.</div>
 <pre class="x402-output" id="sponsoredWalletResult" aria-label="Native sponsored transfer status"></pre>
 </section>
 <section class="panel x402-panel"><div class="x402-head"><div><small>05 / TRUSTGATE PAYMENT BOUNDARY</small><h2>Identity → Policy → Settlement</h2></div></div>
