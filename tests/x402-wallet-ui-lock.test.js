@@ -54,6 +54,10 @@ test('existing wallet popup errors explain manual resolution and never retry aut
     assert.match(described,/Do not open a second payment/i);
   }
   assert.match(describeWalletPromptError(new Error('User rejected request')),/rejected/i);
+  const rejected=describeWalletPromptError(new Error('Signing was rejected'));
+  assert.match(rejected,/did not complete the transaction signature/i);
+  assert.match(rejected,/no transaction hash/i);
+  assert.match(rejected,/before attempting another 0.1 CCD transfer/i);
   assert.equal(describeWalletPromptError(new Error('RPC_DOWN')),'RPC_DOWN');
 });
 
