@@ -114,7 +114,16 @@ function requireScope(response,account,merchant,sponsor){
 async function getJson(url,options={}) {
   const response=await fetch(url,{cache:'no-store',...options});
   const data=await response.json();
-  if(!response.ok)throw Error(data?.error||'SERVICE_UNAVAILABLE');
+  if(!response.ok){
+    if(response.status===429 && data?.error==='SPONSOR_PREPARE_RATE_LIMITED'){
+      const next=data.retryAfterAt && Number.isFinite(Date.parse(data.retryAfterAt))
+        ?new Date(data.retryAfterAt).toLocaleString():'after the backend quota resets';
+      throw Error('Sponsor preparation quota reached ('+(data.limitScope||'unknown')+
+        '). No payment was prepared. Next eligible attempt: '+next+
+        '. Do not click repeatedly; if any earlier wallet approval was accepted, verify Owner transaction history first.');
+    }
+    throw Error(data?.error||'SERVICE_UNAVAILABLE');
+  }
   return data;
 }
 
