@@ -18,6 +18,7 @@ import {
 
 const $=id=>document.getElementById(id);
 const button=$('sponsoredWalletSend');
+const refreshButton=$('sponsoredRefresh');
 const inspectButton=$('sponsoredInspect');
 const status=$('sponsoredWalletStatus');
 const output=$('sponsoredWalletResult');
@@ -30,6 +31,7 @@ let uncertainSubmission=false;
 let inspectionInProgress=false;
 let lastInspection=null;
 let checkoutReady=false;
+let readinessRetryable=false;
 let readinessSerial=0;
 let signingInProgress=false;
 
@@ -51,7 +53,7 @@ function refreshCheckoutButton(){
   button.disabled=!checkoutReady || unresolved || signingInProgress ||
     !!getActiveWalletOperation();
   button.textContent=!checkoutReady?
-    'Checkout locked · Sponsor setup required':
+    (readinessRetryable?'Checkout paused · Recheck Sponsor':'Checkout locked · Sponsor setup required'):
     uncertainSubmission?'Check wallet history · submission status unknown':
     unresolved?'Verify previous transfer before another payment':
       'Review and sign 0.1 Testnet CCD in Wallet ↗';
@@ -131,7 +133,9 @@ async function refreshWalletReadiness(){
   if(signingInProgress)return;
   const serial=++readinessSerial;
   checkoutReady=false;
+  readinessRetryable=false;
   button.disabled=true;
+  if(refreshButton)refreshButton.disabled=true;
   button.textContent='Checking payment prerequisites…';
   report('Checking Gateway and Sponsor readiness without connecting a wallet…');
   try{
@@ -141,23 +145,33 @@ async function refreshWalletReadiness(){
     let readiness=evaluateWalletSponsorReadiness(gateway,sponsor);
     if(readiness.needsAccounts){
       // Avoid costly public gRPC calls unless server flags are configured.
-      const accounts=await getJson('/api/sponsor/accounts');
+      let accounts=await getJson('/api/sponsor/accounts');
+      // The public account check is read-only; one transient Testnet RPC
+      // timeout should not be confused with missing funds. Retry once only.
+      if(accounts.status==='ONCHAIN_LOOKUP_UNAVAILABLE'){
+        accounts=await getJson('/api/sponsor/accounts');
+      }
       readiness=evaluateWalletSponsorReadiness(gateway,sponsor,accounts);
     }
     if(serial!==readinessSerial)return;
     checkoutReady=readiness.ready;
+    readinessRetryable=readiness.code==='ONCHAIN_LOOKUP_UNAVAILABLE';
     refreshCheckoutButton();
     report(uncertainSubmission && checkoutReady?
       'A prior wallet transaction submission has no returned hash. Check your Concordium Testnet wallet history or CCDExplorer before making another payment. Do not assume the transfer failed.':
       shouldHoldNativeCheckout(submittedHash,submittedVerified,uncertainSubmission) && checkoutReady?
       'A transaction was already submitted in this tab. Verify it before starting another payment; a repeated transfer may move more CCD.':
       readiness.message,checkoutReady && !shouldHoldNativeCheckout(submittedHash,submittedVerified,uncertainSubmission));
-  }catch{
+  }catch(error){
     if(serial!==readinessSerial)return;
     checkoutReady=false;
-    button.disabled=true;
-    button.textContent='Checkout locked · Readiness unavailable';
-    report('Could not verify payment prerequisites. Checkout remains disabled; no wallet popup will be requested.');
+    readinessRetryable=true;
+    refreshCheckoutButton();
+    report('Sponsor readiness check temporarily unavailable ('+
+      (error?.message||'NETWORK_ERROR')+
+      '). Use Recheck Sponsor readiness. No payment was sent and wallet signing remains disabled.');
+  }finally{
+    if(serial===readinessSerial && refreshButton)refreshButton.disabled=false;
   }
 }
 
@@ -292,6 +306,7 @@ async function inspectSubmitted(){
 }
 
 button?.addEventListener('click',submitSponsoredWalletTransfer);
+refreshButton?.addEventListener('click',refreshWalletReadiness);
 inspectButton?.addEventListener('click',inspectSubmitted);
 hashField?.addEventListener('input',()=>{
   if(lastInspection?.transaction!==normalizeNativeTransactionHash(hashField.value))
