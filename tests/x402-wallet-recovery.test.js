@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {
-  LAST_NATIVE_TX_KEY,normalizeNativeTransactionHash,
+  LAST_NATIVE_TX_KEY,LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY,normalizeNativeTransactionHash,
   shouldHoldNativeCheckout,buildNativeInspectionRecord
 } from '../lib/x402-wallet-recovery.js';
 
@@ -22,6 +22,10 @@ test('previous submitted transaction blocks a blind second signature until indep
   assert.equal(shouldHoldNativeCheckout(hash,'true'),true);
   assert.equal(shouldHoldNativeCheckout(hash,true),false);
   assert.equal(shouldHoldNativeCheckout('bad-hash',false),false);
+  assert.equal(shouldHoldNativeCheckout(null,false,true),true);
+  assert.equal(shouldHoldNativeCheckout(null,true,true),true);
+  assert.equal(shouldHoldNativeCheckout(hash,true,true),true);
+  assert.equal(shouldHoldNativeCheckout(null,false,'true'),false);
 });
 
 test('public chain inspection is never an x402 paid entitlement or server attestation',()=>{
@@ -63,7 +67,7 @@ test('browser offers hash verification while checkout is locked, and saves publi
   assert.match(client,/sessionStorage\.setItem\(LAST_NATIVE_TX_KEY,normalized\)/);
   assert.match(client,/sessionStorage\.getItem\(LAST_NATIVE_TX_KEY\)/);
   assert.match(client,/sessionStorage\.removeItem\(LAST_NATIVE_TX_KEY\)/);
-  assert.match(client,/shouldHoldNativeCheckout\(submittedHash,submittedVerified\)/);
+  assert.match(client,/shouldHoldNativeCheckout\(submittedHash,submittedVerified,uncertainSubmission\)/);
   assert.match(client,/getJson\('\/api\/x402\/resource\?mode=browser-inspect&hash='/);
   assert.match(client,/if\(normalizeNativeTransactionHash\(proof\.transaction\)!==hash\)/);
   assert.match(client,/buildNativeInspectionRecord\(proof,new Date\(\)\.toISOString\(\)\)/);
@@ -71,4 +75,15 @@ test('browser offers hash verification while checkout is locked, and saves publi
   assert.match(client,/link\.download='trustgate-native-chain-inspection-'/);
   assert.match(client,/lastInspection=inspection\.verified\?inspection:null/);
   assert.match(LAST_NATIVE_TX_KEY,/^trustgate:native-testnet/);
+  assert.match(LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY,/^trustgate:native-testnet/);
+  assert.match(client,/sessionStorage\.setItem\(LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY,'1'\)/);
+  assert.match(client,/sessionStorage\.getItem\(LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY\)/);
+  assert.match(client,/sessionStorage\.removeItem\(LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY\)/);
+  assert.match(client,/uncertainSubmission=true/);
+  assert.match(client,/forgetButton\.disabled=!submittedHash && !uncertainSubmission/);
+  const markedAt=client.indexOf("sessionStorage.setItem(LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY,'1')");
+  const submitAt=client.indexOf('await wallet.sendSponsoredTransaction(account,tx)');
+  assert.ok(markedAt>0 && markedAt<submitAt,
+    'mark unresolved locally BEFORE any wallet submission');
 });
+
