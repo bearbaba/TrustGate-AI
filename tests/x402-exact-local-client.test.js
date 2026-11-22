@@ -5,7 +5,7 @@ import {ExactConcordiumScheme} from '@x402/concordium/exact/client';
 import {PROOF_CONTEXT} from '../lib/proof-message.js';
 import {
   EXACT_TESTNET_ORIGIN,EXACT_TESTNET_MERCHANT,EXACT_TESTNET_SPONSOR,
-  assertExactTestnetOffer,createSenderPaymentEnvelope,
+  assertExactTestnetOffer,createSenderPaymentEnvelope,buildOwnerSignerFromWalletExport,
   inspectExactClientReadiness,submitExactTestnetPayment
 } from '../lib/x402-exact-local-client.js';
 import {X402_SCOPE} from '../lib/x402-client-intent.js';
@@ -149,6 +149,27 @@ test('locally signed scoped access intent and x402 PAYMENT-SIGNATURE complete of
     assert.equal(result.evidenceKind,'PAID_VERIFIED_AGENT_EVIDENCE');
     assert.equal(result.grantsPaidResource,true);
     assert.equal(stages.length,4);
+  }finally{
+    if(existing===undefined)delete process.env.CI;else process.env.CI=existing;
+  }
+});
+
+test('local account export rejects malformed data before creating a payment',()=>{
+  assert.throws(()=>buildOwnerSignerFromWalletExport('not a JSON export'),/EXPORT_INVALID/);
+});
+
+test('official client accepts an injected local SDK signer and rejects ambiguous signer sources',async()=>{
+  const existing=process.env.CI;
+  try{
+    delete process.env.CI;
+    const signer=buildBasicAccountSigner(SEED);
+    const result=await submitExactTestnetPayment({
+      ownerSigner:signer,fetchImpl:mockFetch,createScheme:buildMockOfficialScheme
+    });
+    assert.equal(result.verified,true);
+    await assert.rejects(()=>submitExactTestnetPayment({
+      ownerSigner:signer,ownerPrivateKey:SEED,fetchImpl:mockFetch
+    }),/AMBIGUOUS/);
   }finally{
     if(existing===undefined)delete process.env.CI;else process.env.CI=existing;
   }
