@@ -43,4 +43,10 @@ test('Concordium Wallet Sign & Submit can parse and sign exact sponsor V1 transa
   assert.equal(signable.version,1);
   const finalized=await Transaction.signAndFinalize(signable,buildBasicAccountSigner(SEED));
   assert.equal(finalized.version,1);
+  // This is what the wallet's gRPC sendTransaction path serializes just
+  // before broadcasting the user-approved transaction.
+  const bytes=Transaction.serializeBlockItem(finalized);
+  assert.ok(bytes.length>64);
+  const hash=Transaction.getAccountTransactionHash(finalized);
+  assert.equal(hash.length,32);
 });
