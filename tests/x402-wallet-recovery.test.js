@@ -58,6 +58,7 @@ test('browser offers hash verification while checkout is locked, and saves publi
   const client=await readFile(new URL('../src/x402-sponsored-wallet.js',import.meta.url),'utf8');
   assert.match(html,/id="sponsoredHash"/);
   assert.match(html,/id="sponsoredForget"/);
+  assert.match(html,/id="sponsoredDownload"[^>]*disabled/);
   assert.match(html,/id="sponsoredInspect"[^>]*disabled/);
   assert.match(client,/sessionStorage\.setItem\(LAST_NATIVE_TX_KEY,normalized\)/);
   assert.match(client,/sessionStorage\.getItem\(LAST_NATIVE_TX_KEY\)/);
@@ -66,5 +67,8 @@ test('browser offers hash verification while checkout is locked, and saves publi
   assert.match(client,/getJson\('\/api\/x402\/resource\?mode=browser-inspect&hash='/);
   assert.match(client,/if\(normalizeNativeTransactionHash\(proof\.transaction\)!==hash\)/);
   assert.match(client,/buildNativeInspectionRecord\(proof,new Date\(\)\.toISOString\(\)\)/);
+  assert.match(client,/downloadButton\.disabled=!lastInspection/);
+  assert.match(client,/link\.download='trustgate-native-chain-inspection-'/);
+  assert.match(client,/lastInspection=inspection\.verified\?inspection:null/);
   assert.match(LAST_NATIVE_TX_KEY,/^trustgate:native-testnet/);
 });
