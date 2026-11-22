@@ -152,6 +152,8 @@ async function submitSponsoredWalletTransfer(){
   signingInProgress=true;
   button.disabled=true;
   inspectButton.disabled=true;
+  lastInspection=null;
+  downloadButton.disabled=true;
   output.textContent='';
   try{
     report('Checking gateway and Sponsor signing authority before requesting a wallet signature…');
