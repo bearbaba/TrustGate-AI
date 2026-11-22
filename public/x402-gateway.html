@@ -42,7 +42,8 @@
 <input id="sponsoredHash" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="70" placeholder="Paste a 64-character transaction hash" aria-describedby="sponsoredHashHelp">
 <button class="outline" id="sponsoredForget" type="button" disabled>Clear local record</button>
 </div>
-<p id="sponsoredHashHelp">You can verify a transaction after refreshing this page, even while the payment gateway is locked. Only the public transaction hash is remembered in this browser tab; no signatures or wallet credentials are saved. Verification does not grant access to a paid x402 resource.</p>
+<p id="sponsoredHashHelp">If the wallet rejected signing, or returned an error without a transaction hash, check your Owner account's Concordium Testnet history before attempting another 0.1 CCD transfer. This tab saves only a public transaction hash (when available) and a non-secret unresolved-submission flag; it never saves wallet credentials or signatures. A missing hash is not proof a payment failed. Verification does not grant a paid x402 resource.</p>
+<p class="x402-help"><a href="https://ccdexplorer.io/testnet/account/34C1ozW8edKtBmA8FUFoR4aBys8ofuwtRmYqqbzNVPAsATT4wk" target="_blank" rel="noopener noreferrer" id="sponsoredOwnerHistory">Check Agent #1323 Owner transaction history on Testnet CCDExplorer ↗</a> &middot; Inspect any 0.1 CCD transfer to Merchant before clearing the local warning.</p>
 </div>
 <div class="status" id="sponsoredWalletStatus" role="status" aria-live="polite">Checking live Gateway configuration and Sponsor signing-key ownership. No wallet popup while locked.</div>
 <pre class="x402-output" id="sponsoredWalletResult" aria-label="Native sponsored transfer status"></pre>
@@ -52,6 +53,6 @@
 <p>The payment-signature is a separate wallet transaction signature. Your existing gasless Live Proof signature cannot authorize a money transfer.</p>
 </section>
 <div class="x402-bottom">
-<p><strong>Scope:</strong> the Merchant and dedicated Redis are configured; settlement remains disabled until the Sponsor is securely keyed, funded and verified. This page never collects wallet seeds or authorizes transfers by itself. Native wallet-sponsored transfers require your explicit wallet signature; full x402 exact settlement and paid-resource access remain pending independent verification.</p>
+<p><strong>Scope:</strong> the Testnet Merchant, durable Redis and the dedicated Sponsor signing authority are configured, but no user-approved CCD payment or finalized settlement has yet been independently confirmed. This page never collects wallet seeds or authorizes transfers by itself. Native wallet-sponsored transfers require explicit user wallet approval; full x402 exact settlement and paid-resource access remain pending independent verification.</p>
 <a href="https://github.com/bearbaba/TrustGate-AI/blob/main/docs/X402_GATEWAY_SETUP.md" target="_blank" rel="noopener noreferrer">Gateway configuration and security checklist ↗</a>
 </div></main></body></html>
