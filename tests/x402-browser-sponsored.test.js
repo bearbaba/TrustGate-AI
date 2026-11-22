@@ -3,6 +3,7 @@ import {readdir} from 'node:fs/promises';
 import resourceHandler from '../api/x402/resource.js';
 import assert from 'node:assert/strict';
 import {CcdAmount,SequenceNumber} from '@concordium/web-sdk';
+import { Transaction } from '@concordium/web-sdk/transactions';
 import {handleBrowserSponsoredPrepare,prepareSponsoredCcdTransaction}
   from '../lib/x402-browser-sponsored.js';
 import {handleBrowserSponsoredInspect} from '../lib/x402-browser-inspect.js';
@@ -134,6 +135,21 @@ test('SDK sponsor-first builder creates authentic V1 transaction with fixed CCD 
   assert.equal(tx.header.sender,PROOF_CONTEXT.owner);
   assert.equal(tx.header.sponsor.address??tx.header.sponsor.account,sponsor);
   assert.ok(tx.signatures?.sponsor);
+  // The exact JSON handed to Concordium Wallet must describe only a
+  // native transfer to our Merchant, for exactly 100000 microCCD.
+  assert.deepEqual(tx.payload,{
+    type:'transfer',toAddress:merchant,amount:'100000'
+  });
+  // Demonstrate interoperability with the SDK parser used by the
+  // browser-wallet adapter, without actually submitting a payment.
+  const parsed=Transaction.signableFromJSON(tx);
+  const json=JSON.parse(JSON.stringify(Transaction.toJSON(parsed),
+    (_key,value)=>typeof value==='bigint'?Number(value):value));
+  assert.equal(json.payload.type,'transfer');
+  assert.equal(json.payload.toAddress,merchant);
+  assert.equal(json.payload.amount,'100000');
+  assert.equal(json.header.sender,PROOF_CONTEXT.owner);
+  assert.equal(json.version,1);
 });
 
 test('browser inspection only reports public finalized scope; no paid access',async()=>{
