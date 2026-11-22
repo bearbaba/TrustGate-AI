@@ -96,6 +96,21 @@ test('global sponsor quota and Redis reservation guard pre-signing against repla
   assert.equal(signing,0);
 });
 
+test('rate limited Sponsor preparation returns 429 with a bounded retry hint, without signing',async()=>{
+  let signatures=0;
+  const r=await prepare({
+    rateLimit:async()=>({ok:false,scope:'minute',retryAfterSeconds:25}),
+    prepare:async()=>{signatures++;return fakePayment;}
+  });
+  assert.equal(r.statusCode,429);
+  assert.equal(r.body.error,'SPONSOR_PREPARE_RATE_LIMITED');
+  assert.equal(r.body.limitScope,'minute');
+  assert.equal(r.body.retryAfterSeconds,25);
+  assert.equal(r.headers['Retry-After'],'25');
+  assert.match(r.body.retryAfterAt,/^20\\d{2}-/);
+  assert.equal(signatures,0);
+});
+
 test('only a bound Sponsor-signed transfer is returned; never a private key or paid entitlement',async()=>{
   let calls=0;let payload;
   const r=await prepare({
