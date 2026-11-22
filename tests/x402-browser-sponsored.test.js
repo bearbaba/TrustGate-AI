@@ -107,7 +107,7 @@ test('rate limited Sponsor preparation returns 429 with a bounded retry hint, wi
   assert.equal(r.body.limitScope,'minute');
   assert.equal(r.body.retryAfterSeconds,25);
   assert.equal(r.headers['Retry-After'],'25');
-  assert.match(r.body.retryAfterAt,/^20\\d{2}-/);
+  assert.match(r.body.retryAfterAt,/^20\d{2}-/);
   assert.equal(signatures,0);
 });
 
