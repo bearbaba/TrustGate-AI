@@ -69,6 +69,17 @@ test('funded Sponsor alone is insufficient until correct on-chain key is verifie
   ])assert.equal(check(gateway,sponsor,bad).ready,false);
 });
 
+test('temporary Testnet RPC outage is not falsely presented as missing Sponsor CCD',()=>{
+  const result=check(gateway,sponsor,{
+    ...accounts,status:'ONCHAIN_LOOKUP_UNAVAILABLE',
+    sponsorHasAvailableCcd:null,merchantExists:null,sponsorExists:null
+  });
+  assert.equal(result.ready,false);
+  assert.equal(result.code,'ONCHAIN_LOOKUP_UNAVAILABLE');
+  assert.match(result.message,/RPC/);
+  assert.doesNotMatch(result.message,/funding or identity could not be verified/i);
+});
+
 test('mismatched networks never unlock checkout',()=>{
   for(const patch of [
     {g:{...gateway,network:'ccd:wrong'},s:sponsor,a:accounts},
@@ -93,6 +104,8 @@ test('browser button is disabled initially and is guarded until public readiness
   const js=await readFile(new URL('../src/x402-sponsored-wallet.js',import.meta.url),'utf8');
   const statusJs=await readFile(new URL('../public/x402-gateway.js',import.meta.url),'utf8');
   assert.match(html,/<button[^>]+id="sponsoredWalletSend"[^>]+disabled/);
+  assert.match(html,/id="sponsoredRefresh"/);
+  assert.match(js,/refreshButton\?\.addEventListener\('click',refreshWalletReadiness\)/);
   assert.match(js,/if\(!checkoutReady\)\{/);
   assert.match(js,/button\.disabled=!checkoutReady/);
   assert.match(js,/evaluateWalletSponsorReadiness\(gateway,sponsor,accounts\)/);

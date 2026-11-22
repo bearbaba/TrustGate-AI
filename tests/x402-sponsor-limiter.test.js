@@ -16,7 +16,7 @@ function mock(result, capture) {
 
 test('Sponsor limits use one atomic Redis Lua EVAL with bounded quota',async()=>{
   const requests=[];
-  for(const [action,limit] of [['supported',30],['verify',24],['settle',4]]){
+  for(const [action,limit] of [['supported',120],['verify',48],['settle',4]]){
     assert.equal(await enforceSponsorRateLimit(config,action,{
       now:Date.UTC(2026,10,21,6,0,0),
       fetchImpl:mock(1,requests)
@@ -47,7 +47,7 @@ test('Read-only account inspection is rate-limited even while sponsor is locked'
   const cmd=JSON.parse(requests[0].init.body);
   assert.equal(cmd[2],'1');
   assert.match(cmd[3],/^tg:x402:sponsor:limit:accounts:\d+$/);
-  assert.deepEqual(cmd.slice(4),['120','15']);
+  assert.deepEqual(cmd.slice(4),['120','240']);
   await assert.rejects(()=>enforceSponsorRateLimit(closedConfig,'settle',{
     fetchImpl:mock(1,[])
   }));
@@ -73,7 +73,7 @@ test('Redis failure, indeterminate answers and missing config always fail closed
   await assert.rejects(()=>enforceSponsorRateLimit(config,'unknown'));
 });
 
-test('wallet preparation is limited to two per minute and twelve per day',async()=>{
+test('wallet preparation is generously limited to twenty per minute and 240 per day',async()=>{
   const requests=[];
   assert.equal(await enforceSponsorRateLimit(config,'prepare',{
     now:Date.UTC(2026,10,21,6,0,0),
@@ -83,7 +83,7 @@ test('wallet preparation is limited to two per minute and twelve per day',async(
   assert.equal(cmd[2],'2');
   assert.match(cmd[3],/^tg:x402:sponsor:limit:prepare:\d+$/);
   assert.match(cmd[4],/^tg:x402:sponsor:daily-prepare:\d+$/);
-  assert.deepEqual(cmd.slice(5),['120','2','172800','12']);
+  assert.deepEqual(cmd.slice(5),['120','20','172800','240']);
   assert.equal(await enforceSponsorRateLimit(config,'prepare',{
     fetchImpl:mock(0,[])
   }),false);
