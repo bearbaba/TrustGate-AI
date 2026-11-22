@@ -4,6 +4,18 @@
 
 The gateway uses the official `@x402/core@2.31.0` and `@x402/concordium@2.31.0` packages for the Concordium `exact` scheme. It is intentionally disabled on the public deployment until all necessary Testnet configuration exists. It must not be presented as real payment settlement before a transaction is verified.
 
+## Recovering a submitted Testnet transfer without signing twice
+
+The native checkout now retains **only the last public transaction hash** in the browser tab's `sessionStorage`. It never stores the wallet message signature, private key, transaction signing material or authorization token. When the user refreshes the page after a wallet submission:
+
+1. The page repopulates the 64-character hash and offers **Verify finalized transfer** independently of whether the payment Gateway is locked. Anyone may also paste a public Concordium Testnet transaction hash manually.
+2. The existing read-only `GET /api/x402/resource?mode=browser-inspect&hash=<64-hex>` checks finalized on-chain scope: Agent #1323 sender, Merchant, Sponsor, exact 100000 microCCD amount and hash. Its Redis RPC rate limit remains in force.
+3. A previous hash that has not independently verified **blocks another one-click payment** in the same browser tab. The user can explicitly clear the local record only after a warning that clearing is **not** a cancellation, reversal or refund of any CCD transaction.
+4. The browser displays an evidence object labeled `trustgate-native-chain-inspection/v1`, with `serverAttested:false`, `x402ExactSettlement:false`, and `grantsPaidResource:false`. The `browserCheckedAt` timestamp comes from the user's browser, not a trusted server clock.
+5. If the RPC is unavailable, pending or mismatched, do not assume the original payment failed. Recheck the public transaction hash rather than blindly resubmitting.
+
+Browser recovery is a **UX protection only**; it is not a durable global ledger, checkout-session binding or substitute for an audit. Closing the browser tab may discard the hash; users should retain the on-chain hash from their wallet/explorer. No native transfer is deemed a paid x402 exact resource claim.
+
 ## Readiness UX and current Production lock (2026-11-21)
 
 The **Review and sign 0.1 Testnet CCD in Wallet** button now starts **disabled** and stays disabled until all three read-only public checks succeed:
