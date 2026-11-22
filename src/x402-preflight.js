@@ -1,6 +1,9 @@
 import { detectConcordiumProvider } from '@concordium/browser-wallet-api-helpers';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
 import {
+  acquireWalletOperation,getActiveWalletOperation,describeWalletPromptError,WALLET_OPERATION_EVENT
+} from '../lib/x402-wallet-ui-lock.js';
+import {
   createUnsignedX402Intent, buildX402SignedMessage,
   assertWalletTestnet, checkX402Challenge
 } from '../lib/x402-client-intent.js';
@@ -23,6 +26,11 @@ function encodeHeader(value){
 }
 
 async function inspectChallenge(){
+  const release=acquireWalletOperation('preflight');
+  if(!release){
+    report('Another TrustGate wallet request is active. Complete or reject it before opening the HTTP 402 preflight.');
+    return;
+  }
   button.disabled=true;
   output.textContent='';
   try{
@@ -85,9 +93,13 @@ async function inspectChallenge(){
     },null,2);
     report('HTTP 402 verified. You signed an access request, not a transaction. No CCD moved.',true);
   }catch(error){
-    report('Challenge not verified: '+(error?.message||'wallet or backend error'));
+    report('Challenge not verified: '+describeWalletPromptError(error));
   }finally{
-    button.disabled=false;
+    release();
+    button.disabled=!!getActiveWalletOperation();
   }
 }
 button.addEventListener('click',inspectChallenge);
+document.addEventListener(WALLET_OPERATION_EVENT,()=>{
+  button.disabled=!!getActiveWalletOperation();
+});
