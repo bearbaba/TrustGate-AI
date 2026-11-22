@@ -2,7 +2,7 @@
 
 **Status (2026-11-22): Testnet Gateway and first-party Sponsor are configured, Sponsor signing key matches live on-chain credentials, and a valid x402 exact quote has been observed. Native wallet payment and x402 paid-resource settlement are NOT yet confirmed.**
 
-The gateway uses the official `@x402/core@2.31.0` and `@x402/concordium@2.31.0` packages for the Concordium `exact` scheme. It is intentionally disabled on the public deployment until all necessary Testnet configuration exists. It must not be presented as real payment settlement before a transaction is verified.
+The gateway uses the official `@x402/core@2.31.0` and `@x402/concordium@2.31.0` packages for the Concordium `exact` scheme. Its Testnet configuration has been enabled after secure Sponsor key validation, but no actual payment has yet been independently confirmed. It must not be presented as real payment settlement before a transaction is verified.
 
 ### Reuse an already connected Agent Owner before asking for a new popup
 
@@ -26,6 +26,18 @@ The owner-signed HTTP 402 preflight and native sponsored transfer use the same C
 - Do not blindly retry a transaction if the wallet has already shown or accepted a CCD transfer. Inspect its transaction history and public hash with **Verify finalized transfer** instead.
 - The lock is an **in-page UI convenience**; it cannot know about prompts opened in other tabs, browser windows or websites, and it is not an authorization control. The backend still validates the signed intent, Sponsor authority and atomic replay reservations.
 - No automatic retry, auto-approval, or extra Testnet transfer is initiated by this change.
+
+## Ambiguous Concordium Wallet Sign & Submit result (no transaction hash)
+
+A user observed `Value is not an integer` following the sponsored CCD review popup. The exact source of this error remains **unconfirmed**. A new offline regression test reproduces the critical Concordium Wallet API sequence: `Transaction.toJSON` -> extension BigInt encoding -> extension JSON parsing -> `Transaction.signableFromJSON` -> `Transaction.signAndFinalize` -> `Transaction.serializeBlockItem` and transaction hash calculation. The published sample key is used only for local test signing, with no chain communication. The sequence passes on the project's pinned SDK, so **do not claim the production issue is solved merely from a green CI result**.
+
+For a transaction submitted through `sendSponsoredTransaction`, the wallet may display a failure after the network has already received a transaction, before it returns a hash to the browser. To prevent accidental duplicate transfers:
+
+- Immediately before calling `sendSponsoredTransaction`, TrustGate writes a `sessionStorage` flag recording an **unresolved attempted submission** in this browser tab. The flag does **not** store a transaction, signature, private key or entitlement.
+- If the wallet returns a valid public transaction hash, the unresolved flag is cleared and normal hash-based read-only inspection is available.
+- If the wallet throws or no hash is returned, checkout remains **locally blocked across refreshes**, with an explicit warning to examine the registered Owner account's **Concordium Testnet transaction history** first.
+- After checking history, the user may intentionally select **Clear local record** and confirm that doing so does not reverse a transaction or prove failure. Do not clear the flag merely to retry without reconciling the original transfer.
+- This is a browser-tab protection and cannot replace on-chain reconciliation, other-tab protections or the server's atomic Redis replay safeguards.
 
 ## Recovering a submitted Testnet transfer without signing twice
 

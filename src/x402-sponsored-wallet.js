@@ -8,8 +8,8 @@ import {
 } from '../lib/x402-wallet-ui-lock.js';
 import {evaluateWalletSponsorReadiness} from '../lib/x402-wallet-readiness.js';
 import {
-  LAST_NATIVE_TX_KEY,normalizeNativeTransactionHash,shouldHoldNativeCheckout,
-  buildNativeInspectionRecord
+  LAST_NATIVE_TX_KEY,LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY,
+  normalizeNativeTransactionHash,shouldHoldNativeCheckout,buildNativeInspectionRecord
 } from '../lib/x402-wallet-recovery.js';
 import {
   assertWalletTestnet,createUnsignedX402Intent,buildX402SignedMessage,
@@ -26,6 +26,7 @@ const forgetButton=$('sponsoredForget');
 const downloadButton=$('sponsoredDownload');
 let submittedHash=null;
 let submittedVerified=false;
+let uncertainSubmission=false;
 let inspectionInProgress=false;
 let lastInspection=null;
 let checkoutReady=false;
@@ -40,17 +41,18 @@ function report(message,good=false){
 function refreshRecoveryButtons(){
   inspectButton.disabled=inspectionInProgress ||
     normalizeNativeTransactionHash(hashField?.value)===null;
-  forgetButton.disabled=!submittedHash;
+  forgetButton.disabled=!submittedHash && !uncertainSubmission;
   downloadButton.disabled=!lastInspection ||
     normalizeNativeTransactionHash(hashField?.value)!==lastInspection.transaction;
 }
 
 function refreshCheckoutButton(){
-  const unresolved=shouldHoldNativeCheckout(submittedHash,submittedVerified);
+  const unresolved=shouldHoldNativeCheckout(submittedHash,submittedVerified,uncertainSubmission);
   button.disabled=!checkoutReady || unresolved || signingInProgress ||
     !!getActiveWalletOperation();
   button.textContent=!checkoutReady?
     'Checkout locked · Sponsor setup required':
+    uncertainSubmission?'Check wallet history · submission status unknown':
     unresolved?'Verify previous transfer before another payment':
       'Review and sign 0.1 Testnet CCD in Wallet ↗';
 }
@@ -60,6 +62,8 @@ function keepPublicTransactionHash(hash){
   if(!normalized)return;
   submittedHash=normalized;
   submittedVerified=false;
+  uncertainSubmission=false;
+  try{sessionStorage.removeItem(LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY);}catch{}
   lastInspection=null;
   hashField.value=normalized;
   try{sessionStorage.setItem(LAST_NATIVE_TX_KEY,normalized);}catch{}
@@ -69,7 +73,10 @@ function keepPublicTransactionHash(hash){
 
 function restorePublicTransactionHash(){
   let previous;
-  try{previous=sessionStorage.getItem(LAST_NATIVE_TX_KEY);}catch{}
+  try{
+    previous=sessionStorage.getItem(LAST_NATIVE_TX_KEY);
+    uncertainSubmission=sessionStorage.getItem(LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY)==='1';
+  }catch{}
   const normalized=normalizeNativeTransactionHash(previous);
   if(normalized){
     submittedHash=normalized;
@@ -131,9 +138,11 @@ async function refreshWalletReadiness(){
     if(serial!==readinessSerial)return;
     checkoutReady=readiness.ready;
     refreshCheckoutButton();
-    report(shouldHoldNativeCheckout(submittedHash,submittedVerified) && checkoutReady?
+    report(uncertainSubmission && checkoutReady?
+      'A prior wallet transaction submission has no returned hash. Check your Concordium Testnet wallet history or CCDExplorer before making another payment. Do not assume the transfer failed.':
+      shouldHoldNativeCheckout(submittedHash,submittedVerified,uncertainSubmission) && checkoutReady?
       'A transaction was already submitted in this tab. Verify it before starting another payment; a repeated transfer may move more CCD.':
-      readiness.message,checkoutReady && !shouldHoldNativeCheckout(submittedHash,submittedVerified));
+      readiness.message,checkoutReady && !shouldHoldNativeCheckout(submittedHash,submittedVerified,uncertainSubmission));
   }catch{
     if(serial!==readinessSerial)return;
     checkoutReady=false;
@@ -150,7 +159,7 @@ async function submitSponsoredWalletTransfer(){
     report('Checkout is locked: complete secure Sponsor setup and refresh readiness first.');
     return;
   }
-  if(shouldHoldNativeCheckout(submittedHash,submittedVerified)){
+  if(shouldHoldNativeCheckout(submittedHash,submittedVerified,uncertainSubmission)){
     report('A previous transfer is still unverified. Check its transaction hash or explicitly clear your local record. Clearing does not cancel a blockchain transfer.');
     return;
   }
@@ -206,6 +215,12 @@ async function submitSponsoredWalletTransfer(){
     // transfer and signMessage() must never be used as the payment signature.
     stage='wallet transaction approval/submission';
     walletSubmissionAttempted=true;
+    // The wallet may broadcast before its promise returns, or show a toast
+    // without a hash. Fail closed on ambiguity, including across refreshes.
+    uncertainSubmission=true;
+    try{sessionStorage.setItem(LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY,'1');}catch{}
+    refreshCheckoutButton();
+    refreshRecoveryButtons();
     // Concordium Wallet 2.x currently checks the dApp's allowlisted accounts
     // with a direct string includes(accountAddress). Unlike signMessage(),
     // sendSponsoredTransaction() does not normalize AccountAddress objects
@@ -291,17 +306,21 @@ downloadButton?.addEventListener('click',()=>{
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 forgetButton?.addEventListener('click',()=>{
-  if(!submittedHash)return;
-  // Explicitly warn that forgetting a browser hash does NOT undo a transfer.
-  if(!window.confirm('This only clears the public hash saved in this tab. It does NOT cancel, refund or invalidate an on-chain transaction. Have you checked its status in CCDExplorer?'))return;
-  try{sessionStorage.removeItem(LAST_NATIVE_TX_KEY);}catch{}
+  if(!submittedHash && !uncertainSubmission)return;
+  // Explicit reconciliation is required before removing local double-payment protection.
+  if(!window.confirm('Have you checked the transaction history of your Owner account on Concordium Testnet and verified that it is safe to start another payment? This only clears LOCAL browser protection. It does NOT cancel, reverse or refund a transfer, and does not prove an unsuccessful submission.'))return;
+  try{
+    sessionStorage.removeItem(LAST_NATIVE_TX_KEY);
+    sessionStorage.removeItem(LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY);
+  }catch{}
+  uncertainSubmission=false;
   submittedHash=null;
   submittedVerified=false;
   lastInspection=null;
   hashField.value='';
   refreshRecoveryButtons();
   refreshCheckoutButton();
-  report('Local transaction hash cleared. This does not reverse a transfer or prove it failed.');
+  report('Local warning cleared after your explicit confirmation. This does not prove a failed transfer or reverse any CCD.');
 });
 restorePublicTransactionHash();
 
