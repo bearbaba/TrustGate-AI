@@ -59,10 +59,12 @@ npm install
 npm run x402:check
 ```
 
-For a real **0.1 Testnet CCD** attempt, use only a locally controlled **Agent #1323 Owner signing key**, set in your own temporary shell environment under `TRUSTGATE_OWNER_PRIVATE_KEY` (32-byte Ed25519 hex). **Do not paste keys into messages, a website, GitHub issues, an `.env` committed file, or Vercel.** If you cannot safely access your local signing key, skip this step. The client shows exact payment scope and demands interactive typed confirmation:
+For a real **0.1 Testnet CCD** attempt, the client now accepts an **account-only Concordium Testnet export** via the official SDK, or an already available 32-byte Ed25519 account signing key in a temporary local `TRUSTGATE_OWNER_PRIVATE_KEY` environment variable. The export must belong to the registered **Agent #1323 Owner** and live **outside this Git repository**. Do not use a recovery phrase or entire-wallet backup; never send any account private key or export to ChatGPT, websites, GitHub, `.env` commits or Vercel. If you cannot securely access the matching account signing material, skip actual payment. The CLI displays scope and demands explicit confirmation:
 
 ```sh
-npm run x402:pay
+npm run x402:pay -- --wallet-file "C:/path/outside/repository/owner-account.export"
+# Or, only when the compatible private key is already available in your local environment:
+# npm run x402:pay
 ```
 
 After confirmation the script builds an Owner-signed access intent, validates the actual HTTP 402 challenge, calls `ExactConcordiumScheme.createPaymentPayload`, sends the resulting `PAYMENT-SIGNATURE` to the resource, and reports a public transaction hash **only if the server returns verified paid evidence**. No automatic retries. On ambiguous settlement, inspect the Owner and Merchant's Testnet chain activity before attempting another transfer. This is a real-payment CLI, not a dry-run or a requirement to share secret material.

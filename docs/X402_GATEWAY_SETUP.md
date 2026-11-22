@@ -25,6 +25,19 @@ npm install
 npm run x402:check
 ```
 
+**Preferred local option — official account-only export (no raw HEX handling):**
+
+If your Concordium Wallet supports exporting the **individual Testnet account private key**, use the official account export file for Agent #1323's Owner (**not** the wallet seed phrase, whole-wallet private key or a recovery backup). Keep this sensitive export **only on your own computer**, outside the repository, cloud-sync directories and screenshots. The official Concordium SDK's `parseWallet` and `buildAccountSigner` handle the account-specific export locally.
+
+```bash
+npm run x402:check
+npm run x402:pay -- --wallet-file "C:/path/outside/repository/owner-account.export"
+```
+
+The program refuses Mainnet or a different Owner address, oversized files and any export stored inside the GitHub project (including symlinks), and never sends the export file to the server. It still demands the exact text confirmation before **one** payment. The export is an extremely sensitive spending credential; remove its unnecessary local copies securely when done. Do not send it to ChatGPT or to anyone. This format must be an *account* export supported by Concordium SDK, not an encrypted whole-wallet backup. If you cannot safely obtain the matching account export, **do not export a recovery phrase just for this demo**.
+
+**Alternative — pre-existing local raw Ed25519 account key:**
+
 Only if you already control a **compatible 32-byte Ed25519 signing key for Agent #1323's actual Owner account** on your own machine and are prepared to authorize **one 0.1 Testnet CCD payment**, use a local terminal. In **Windows Git Bash**, the following reads the key without echoing its characters or putting the key into command history:
 
 ```bash
