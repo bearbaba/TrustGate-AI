@@ -10,6 +10,14 @@ When a user retries either x402 preflight or native payment, TrustGate first cal
 
 The UI now labels the failing stage explicitly: `wallet owner connection`, `non-payment message signature`, `sponsor transaction preparation`, or `wallet transaction approval/submission`. This helps distinguish a stale extension request from a backend issue, without exposing keys or signatures. If the extension itself reports an existing pending popup, the browser cannot cancel that popup on the user's behalf; finish or reject it inside Concordium Wallet, and inspect wallet transaction history before retrying any CCD transfer.
 
+## Browser-wallet allowlist compatibility for sponsor-first V1 transfers (2026-11-22)
+
+The first owner-signed HTTP 402 preflight successfully returned `VALID_OFFICIAL_402_CHALLENGE`. The subsequent native `wallet.sendSponsoredTransaction()` initially failed with `Site is not whitelisted` before a transaction hash was returned.
+
+The [Concordium Wallet source](https://github.com/Concordium/concordium-browser-wallet/blob/main/packages/browser-wallet/src/background/index.ts) contains a `runIfAccountIsAllowlisted` guard that checks `allowlist[origin].includes(accountAddress)` against **raw Base58 account strings**. The [wallet API implementation](https://github.com/Concordium/concordium-browser-wallet/blob/main/packages/browser-wallet/src/wallet-api/wallet-api.ts) converts the account to Base58 for `signMessage`, but currently forwards the `sendSponsoredTransaction` account argument unchanged. Passing a typed `AccountAddress.fromBase58(account)` object at that call site can therefore fail the allowlist even for a connected and permitted site.
+
+TrustGate passes the exact **already verified owner account as a Base58 string** to `sendSponsoredTransaction(account, tx)` and still parses the transaction through `Transaction.signableFromJSON`, checks the merchant/amount/sponsor and requires the user's explicit wallet confirmation. No allowlist bypass, token, key or transfer payload changes are involved. This is a client compatibility fix; a new on-chain payment has **not** yet been demonstrated. Users should only retry after checking any prior wallet activity for ambiguous submissions.
+
 ## Pending Concordium Wallet prompt ("Another prompt is already open")
 
 The owner-signed HTTP 402 preflight and native sponsored transfer use the same Concordium Wallet extension. The two separately bundled client scripts now coordinate a **single page-scoped wallet operation lock**, which disables the other button until the current connect/sign/submit flow completes.
