@@ -25,7 +25,9 @@
 - [x] Implement identity-bound *read-only public* service policy demo and document replay/financial security boundaries
 - [x] Implemented config-gated x402 Testnet resource, real SDK scheme, signed-intent checks and shared Redis replay reservation (source-level, no real payment executed)
 - [x] Received distinct Merchant Testnet public account and configured Vercel Production env; Base58Check validated (2026-11-20)
-- [ ] Configure genuine Testnet sponsor/facilitator and durable Redis; then build paying client and independently verify one real settlement
+- [x] Configure distinct Testnet Merchant, funded and signing-key-verified Sponsor/facilitator and durable Redis on Vercel Production; confirm the official Testnet /supported handshake and live HTTP 402 challenge
+- [x] Add an owner-local official @x402/concordium sender-first exact client, with tests that exercise the scheme and payment envelope entirely offline; the Owner must provide their own local compatible signer to perform a real payment
+- [ ] Independently verify one real finalized x402 exact settlement and a paid-resource response (no confirmed hash yet)
 - [ ] Implement meaningful end-to-end x402 Testnet payment and recipient proof; until then explicitly disclose as NOT SHIPPED
 - [x] Added independent open-source offline/live receipt verifier with explicit signature and registry trust boundaries (verify with fresh CLI run before marking live pass)
 - [ ] Add server-signed receipt issuance (production signing key must be managed securely outside GitHub)
