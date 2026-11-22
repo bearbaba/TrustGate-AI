@@ -2,6 +2,9 @@ import { detectConcordiumProvider } from '@concordium/browser-wallet-api-helpers
 import { AccountAddress } from '@concordium/web-sdk';
 import { Transaction } from '@concordium/web-sdk/transactions';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
+import {
+  acquireWalletOperation,getActiveWalletOperation,describeWalletPromptError,WALLET_OPERATION_EVENT
+} from '../lib/x402-wallet-ui-lock.js';
 import {evaluateWalletSponsorReadiness} from '../lib/x402-wallet-readiness.js';
 import {
   LAST_NATIVE_TX_KEY,normalizeNativeTransactionHash,shouldHoldNativeCheckout,
@@ -43,7 +46,8 @@ function refreshRecoveryButtons(){
 
 function refreshCheckoutButton(){
   const unresolved=shouldHoldNativeCheckout(submittedHash,submittedVerified);
-  button.disabled=!checkoutReady || unresolved || signingInProgress;
+  button.disabled=!checkoutReady || unresolved || signingInProgress ||
+    !!getActiveWalletOperation();
   button.textContent=!checkoutReady?
     'Checkout locked · Sponsor setup required':
     unresolved?'Verify previous transfer before another payment':
@@ -149,7 +153,13 @@ async function submitSponsoredWalletTransfer(){
     report('A previous transfer is still unverified. Check its transaction hash or explicitly clear your local record. Clearing does not cancel a blockchain transfer.');
     return;
   }
+  const release=acquireWalletOperation('native-payment');
+  if(!release){
+    report('Another TrustGate wallet request is active. Finish or reject it before signing a transfer.');
+    return;
+  }
   signingInProgress=true;
+  let walletSubmissionAttempted=false;
   button.disabled=true;
   inspectButton.disabled=true;
   lastInspection=null;
@@ -189,6 +199,7 @@ async function submitSponsoredWalletTransfer(){
     report('Review the Concordium Wallet popup: exactly 0.1 Testnet CCD to Merchant. Decline if the details differ.');
     // The wallet itself co-signs and SUBMITS. There is no silent server-side
     // transfer and signMessage() must never be used as the payment signature.
+    walletSubmissionAttempted=true;
     const result=await wallet.sendSponsoredTransaction(AccountAddress.fromBase58(account),tx);
     const hash=typeof result==='string'?result:result?.toString?.();
     if(typeof hash!=='string'||!/^[a-f0-9]{64}$/i.test(hash))
@@ -203,9 +214,13 @@ async function submitSponsoredWalletTransfer(){
     },null,2);
     report('Wallet submitted the transaction. Check on-chain finalization before treating it as proof.',true);
   }catch(error){
-    report('Sponsored wallet checkout not completed: '+(error?.message||'wallet error'));
+    const unresolvedSubmission=walletSubmissionAttempted &&
+      ' If you approved a transfer, inspect your wallet activity or CCDExplorer before trying again; a missing hash is not evidence of a failed payment.';
+    report('Sponsored wallet checkout not completed: '+describeWalletPromptError(error)+
+      (unresolvedSubmission||''));
   }finally{
     signingInProgress=false;
+    release();
     refreshCheckoutButton();
     refreshRecoveryButtons();
   }
@@ -282,6 +297,7 @@ restorePublicTransactionHash();
 // The Gateway refresh button also rechecks Sponsor readiness. The existing
 // Gateway script dispatches this after its public status request resolves.
 document.addEventListener('trustgate:gateway-status-refreshed',refreshWalletReadiness);
+document.addEventListener(WALLET_OPERATION_EVENT,refreshCheckoutButton);
 document.addEventListener('DOMContentLoaded',()=>{
   if(readinessSerial===0)refreshWalletReadiness();
 });

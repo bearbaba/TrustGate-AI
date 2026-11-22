@@ -1,8 +1,17 @@
 # TrustGate AI — Concordium Testnet x402 Gateway (v0.7)
 
-**Status: Testnet Merchant public address configured in Vercel Production; gateway remains LOCKED and no payment has been executed.**
+**Status (2026-11-22): Testnet Gateway and first-party Sponsor are configured, Sponsor signing key matches live on-chain credentials, and a valid x402 exact quote has been observed. Native wallet payment and x402 paid-resource settlement are NOT yet confirmed.**
 
 The gateway uses the official `@x402/core@2.31.0` and `@x402/concordium@2.31.0` packages for the Concordium `exact` scheme. It is intentionally disabled on the public deployment until all necessary Testnet configuration exists. It must not be presented as real payment settlement before a transaction is verified.
+
+## Pending Concordium Wallet prompt ("Another prompt is already open")
+
+The owner-signed HTTP 402 preflight and native sponsored transfer use the same Concordium Wallet extension. The two separately bundled client scripts now coordinate a **single page-scoped wallet operation lock**, which disables the other button until the current connect/sign/submit flow completes.
+
+- If Concordium Wallet says `Another prompt is already open`, open the browser extension, finish or cancel its existing dialog, and only then retry **one** action.
+- Do not blindly retry a transaction if the wallet has already shown or accepted a CCD transfer. Inspect its transaction history and public hash with **Verify finalized transfer** instead.
+- The lock is an **in-page UI convenience**; it cannot know about prompts opened in other tabs, browser windows or websites, and it is not an authorization control. The backend still validates the signed intent, Sponsor authority and atomic replay reservations.
+- No automatic retry, auto-approval, or extra Testnet transfer is initiated by this change.
 
 ## Recovering a submitted Testnet transfer without signing twice
 
