@@ -2,6 +2,7 @@ import { detectConcordiumProvider } from '@concordium/browser-wallet-api-helpers
 import { AccountAddress } from '@concordium/web-sdk';
 import { Transaction } from '@concordium/web-sdk/transactions';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
+import {connectOwnerWallet} from '../lib/x402-wallet-account.js';
 import {
   acquireWalletOperation,getActiveWalletOperation,describeWalletPromptError,WALLET_OPERATION_EVENT
 } from '../lib/x402-wallet-ui-lock.js';
@@ -159,6 +160,7 @@ async function submitSponsoredWalletTransfer(){
     return;
   }
   signingInProgress=true;
+  let stage='payment readiness';
   let walletSubmissionAttempted=false;
   button.disabled=true;
   inspectButton.disabled=true;
@@ -175,21 +177,24 @@ async function submitSponsoredWalletTransfer(){
        state.sponsorHasAvailableCcd!==true ||
        state.merchant!==config.merchant || !state.sponsor)
       throw Error('SPONSOR_KEY_OR_FUNDS_NOT_READY');
+    stage='wallet owner connection';
     const wallet=await detectConcordiumProvider(4000);
     if(typeof wallet?.sendSponsoredTransaction!=='function')
       throw Error('WALLET_REQUIRES_SEND_SPONSORED_TRANSACTION_SUPPORT');
     if(typeof wallet.signMessage!=='function')
       throw Error('WALLET_REQUIRES_SIGN_MESSAGE');
-    const account=await wallet.connect();
+    const {account}=await connectOwnerWallet(wallet);
     assertWalletTestnet(account,await wallet.getSelectedChain());
     const nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),
       b=>b.toString(16).padStart(2,'0')).join('');
     const intent=createUnsignedX402Intent(account,config.merchant,nonce,Date.now());
     report('Sign a NON-PAYMENT access intent first. The transfer requires a separate wallet approval.');
+    stage='non-payment message signature';
     const signature=await wallet.signMessage(account,buildX402SignedMessage(intent));
     if(!signature || typeof signature!=='object'||Array.isArray(signature))
       throw Error('INVALID_OWNER_MESSAGE_SIGNATURE');
     report('Preparing one sponsor-signed 0.1 Testnet CCD transfer (no CCD has moved yet)…');
+    stage='sponsor transaction preparation';
     const response=await getJson('/api/x402/resource?mode=browser-prepare',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({intent:{...intent,signature}})
@@ -199,6 +204,7 @@ async function submitSponsoredWalletTransfer(){
     report('Review the Concordium Wallet popup: exactly 0.1 Testnet CCD to Merchant. Decline if the details differ.');
     // The wallet itself co-signs and SUBMITS. There is no silent server-side
     // transfer and signMessage() must never be used as the payment signature.
+    stage='wallet transaction approval/submission';
     walletSubmissionAttempted=true;
     const result=await wallet.sendSponsoredTransaction(AccountAddress.fromBase58(account),tx);
     const hash=typeof result==='string'?result:result?.toString?.();
@@ -216,7 +222,7 @@ async function submitSponsoredWalletTransfer(){
   }catch(error){
     const unresolvedSubmission=walletSubmissionAttempted &&
       ' If you approved a transfer, inspect your wallet activity or CCDExplorer before trying again; a missing hash is not evidence of a failed payment.';
-    report('Sponsored wallet checkout not completed: '+describeWalletPromptError(error)+
+    report('Sponsored wallet checkout not completed ('+stage+'): '+describeWalletPromptError(error)+
       (unresolvedSubmission||''));
   }finally{
     signingInProgress=false;
