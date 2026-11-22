@@ -10,6 +10,37 @@ When a user retries either x402 preflight or native payment, TrustGate first cal
 
 The UI now labels the failing stage explicitly: `wallet owner connection`, `non-payment message signature`, `sponsor transaction preparation`, or `wallet transaction approval/submission`. This helps distinguish a stale extension request from a backend issue, without exposing keys or signatures. If the extension itself reports an existing pending popup, the browser cannot cancel that popup on the user's behalf; finish or reject it inside Concordium Wallet, and inspect wallet transaction history before retrying any CCD transfer.
 
+## Official sender-first x402 exact — owner-local Testnet client (2026-11-22)
+
+A real x402 exact payment requires the **sender's partially signed V1 transaction** as the `PAYMENT-SIGNATURE` payload. The resource server forwards it to the facilitator for verification, Sponsor signature, Testnet broadcast and finalization; only then will TrustGate return `PAID_VERIFIED_AGENT_EVIDENCE`.
+
+The available Concordium Wallet for Web API provides `sendSponsoredTransaction` (sponsor-first, wallet co-signs and broadcasts), but **does not currently provide a general sender-only transaction signing method** that returns the needed x402 exact payload. The browser native checkout is therefore not a substitute for the official x402 exact client.
+
+An official `@x402/concordium/exact/client` implementation now ships as `scripts/x402-exact-local.mjs`. It runs **only on the Owner's local computer**, with an explicitly approved payment. The public production server and Sponsor are configured; whether the first x402 exact payment succeeds remains to be demonstrated on-chain.
+
+First, **without any key**, run in your local checkout of this GitHub repository:
+
+```bash
+npm install
+npm run x402:check
+```
+
+Only if you already control a **compatible 32-byte Ed25519 signing key for Agent #1323's actual Owner account** on your own machine and are prepared to authorize **one 0.1 Testnet CCD payment**, use a local terminal. In **Windows Git Bash**, the following reads the key without echoing its characters or putting the key into command history:
+
+```bash
+read -r -s -p 'Owner local TESTNET account signing key (hidden): ' TRUSTGATE_OWNER_PRIVATE_KEY
+echo
+export TRUSTGATE_OWNER_PRIVATE_KEY
+npm run x402:pay
+unset TRUSTGATE_OWNER_PRIVATE_KEY
+```
+
+This key **must never be put into ChatGPT, GitHub, a web form, Vercel, a README, CI, a chat, or a screenshot**. No key is uploaded by this script; it is used only to produce the local owner-signed scoped access intent and sender-only payment signature. The 0.1 Testnet CCD transfer is then submitted by the authenticated facilitator and independently checked for finalization before access can be granted.
+
+The script displays the actual Merchant, Sponsor and amount and requires typing `PAY 0.1 TESTNET CCD` before any payment signature is created. It never retries an ambiguous submission automatically. If it reports an error after sending the `PAYMENT-SIGNATURE`, **check both Testnet accounts' transaction histories before a second attempt**. An SDK dry-run or passing CI is not a payment receipt.
+
+**If the Owner account key is not available to a local signer, do not export a wallet recovery phrase or provide it to anyone just to run a demo.** In that case the exact x402 flow cannot be completed with the current browser-wallet-only signing API. The existing identity, Policy Witness and 402 preflight remain valid hackathon evidence; do not invent a payment hash.
+
 ## Browser-wallet allowlist compatibility for sponsor-first V1 transfers (2026-11-22)
 
 The first owner-signed HTTP 402 preflight successfully returned `VALID_OFFICIAL_402_CHALLENGE`. The subsequent native `wallet.sendSponsoredTransaction()` initially failed with `Site is not whitelisted` before a transaction hash was returned.

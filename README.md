@@ -5,7 +5,7 @@
 - Live demo: https://trustgate-ai.vercel.app/
 - **Live signed evidence flow:** https://trustgate-ai.vercel.app/live-proof
 - **Adversarial Security Lab:** https://trustgate-ai.vercel.app/security-lab
-- **x402 Testnet Gateway (locked until configured):** https://trustgate-ai.vercel.app/x402-gateway
+- **x402 Testnet Gateway (configured, settlement unverified):** https://trustgate-ai.vercel.app/x402-gateway
 - Agent #1323 metadata management: https://trustgate-ai.vercel.app/sign-agent
 - Source: https://github.com/bearbaba/TrustGate-AI
 - **On-chain proof:** [Successful Testnet setAgentURI transaction](https://ccdexplorer.io/testnet/transaction/93280aa5361967fc656e513e824c495c932c2abdc4cd7253bf3f2db35d90f4ee)
@@ -19,7 +19,7 @@ The owner wallet signed an update to `CIS-8004.setAgentURI` on Testnet registry 
 
 Read [the on-chain evidence and badge verification record](docs/ONCHAIN_EVIDENCE.md) for transaction hash, scope and verification command. A separate [Live Proof evidence log](docs/LIVE_PROOF_EVIDENCE.md) records successful v0.3 and v0.4 owner-wallet tests, including the v0.4 five-check receipt re-verification.
 
-> **Prototype: no payment execution.** The app's `ALLOW` result is a deterministic policy decision, not permission granted to a wallet or a payment settlement. The site offers a single owner-controlled Testnet metadata update; it does not sign payments, transfer funds, implement x402 settlement, or persist audit records on-chain.
+> **Payment boundary:** The Decision Lab's `ALLOW` is a deterministic policy result, never wallet payment authorization. The separate Testnet x402 endpoints are enabled and guarded, but **no payment has yet been independently confirmed as finalized**. No Mainnet support and no silently authorized transfers.
 
 ## Live ownership-bound evidence flow (v0.5)
 
@@ -37,51 +37,39 @@ For REVIEW and BLOCK, the wallet and badge are still verified before returning t
 
 The authenticated service is deliberately **public/read-only**. It demonstrates a genuine wallet-ownership proof, fresh badge resolution and policy-gated evidence delivery, but does not claim a paid integration.
 
-## x402 Testnet gateway (v0.7 — disabled until configured)
+## Concordium x402 Testnet — production gateway configured, settlement not yet verified
 
-The x402 gateway now contains a **source-level testnet resource endpoint**, using the official `@x402/core` and `@x402/concordium` sponsored-transaction server scheme. It checks a separate owner-signed exact-chain, exact-merchant, exact-price intent; verifies Agent #1323; issues an official HTTP 402 challenge only after a real facilitator /supported handshake; verifies a sponsored payment payload; and requires atomic Redis Lua `EVAL` to reserve both replay keys before settlement.
+The gateway uses the **official** `@x402/core@2.31.0` and `@x402/concordium@2.31.0` **exact** scheme. The live resource supports a verified owner-signed access intent and real HTTP 402 payment requirements with an explicit Testnet Sponsor. Payment is **not** claimed until the facilitator verifies the sender's signature, adds its Sponsor signature, submits the CCD transfer, obtains finalization, and an independent Testnet chain read confirms the sender, payee, amount and Sponsor. Redis atomically reserves the intent and payment fingerprint before any settlement attempt.
 
-**The live environment is not yet configured for merchant payments, and NO actual x402 payment has been demonstrated.** The separate Merchant Testnet public address has now been provided and configured on Vercel Production: `4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf`. Dedicated Redis has since been connected to Vercel Production; a securely keyed, funded and verified sponsor/facilitator is still required, and payment remains disabled. The public page deliberately shows a LOCKED gateway until those are set. A wallet `signMessage` is not a payment signature; client-side sponsored transaction signing is also still to be built.
+Production prerequisites **verified** on 2026-11-22: separate Merchant `4XYepvZZJyFkKTTgoTCmNuQYar1PBiscdZBh6cRotsG2Y7SBDf`, separate funded Sponsor `4Q9ZNet1wKBCS3HWYxBSrHjKPfyois52h3gYUUHKe8Fw4Cf3s3`, Sponsor signing key matching the active on-chain credential, official `/supported` handshake, and a dedicated atomic Upstash Redis replay store. The live x402 quote advertises **0.1 Testnet CCD (100000 microCCD)**.
 
-Upstash storage is supported through paired Vercel Marketplace environment variables (`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`) or legacy `KV_REST_API_*`, in addition to the explicit TrustGate names. The Upstash integration must be connected to **this project**, not just installed in the Vercel team. No raw Redis token belongs in this repository.
+**The first complete x402 payment, finalized transaction hash, and paid-resource receipt are still pending.** A successful HTTP 402 challenge is not proof of funds transferred. Do not describe the product as a completed autonomous payment service before the on-chain payment has been independently checked.
 
-Read [the gateway setup and safety checklist](docs/X402_GATEWAY_SETUP.md). Do not fund or deploy mainnet. Never put private keys in this repo.
+### Two distinct payment paths — do not confuse them
 
-## First-party Concordium Testnet facilitator (v0.8 — disabled by default)
+1. **Official sender-first x402 exact:** the client signs only the sender slot of a V1 sponsored transaction; the facilitator verifies, adds the Sponsor signature, submits and finalizes, and only then may the paid resource be issued. A local-owner client is provided in `scripts/x402-exact-local.mjs`. The official client SDK needs an **owner-controlled local account signer**; no Owner key belongs in the hosted page, Vercel, a chat, or the public repository. Concordium Wallet for Web's public API does not currently offer an arbitrary sender-only transaction signing method suitable for this flow.
+2. **Native sponsor-first Concordium Wallet checkout:** `/x402-gateway` offers an explicitly approved wallet transaction with Sponsor already signed. The wallet showed a correctly scoped **0.1 Testnet CCD / Free Transaction** review screen during owner testing, but a later signing attempt displayed **`Value is not an integer`**; a subsequent `Signing was rejected` response was due to dismissing the stalled prompt. No transaction hash has yet been independently confirmed. Native checkout is **not** proof of x402 exact settlement. Unknown submissions are guarded against blind retries.
 
-The gateway now includes an optional **self-hosted, first-party sponsored-transaction facilitator** using the official `@x402/core/facilitator` and `@x402/concordium/exact/facilitator` packages. The server's `/api/sponsor/supported`, `/verify`, `/settle` endpoints are behind bearer authentication, fixed Testnet/merchant/owner/CCD amount checks, and secure sponsor configuration. A public `/api/sponsor/status` reports readiness without returning sensitive values.
+### Local-only official x402 exact acceptance test
 
-**This is source-level work, not confirmed Testnet settlement.** The separate Sponsor address is configured but funding, secure signing key, confirmed gRPC connectivity, paying client and a real on-chain transaction are still required. Authenticated sponsor rate limiting has been implemented with atomic shared Redis quotas; it remains unexercised on a live enabled sponsor. Existing wallet keys are never reused or silently requested.
+Run only on your own computer, never inside a Vercel function or CI. First check production prerequisites without any private key:
 
-The third **public Sponsor Testnet account** is configured in Vercel Production (`4Q9ZNet1wKBCS3HWYxBSrHjKPfyois52h3gYUUHKe8Fw4Cf3s3`). Its private key, balance and on-chain authorization have not been verified. SDK compatibility now follows the official `payload.signedTransaction.header.sender` layout (not a made-up `payload.sender` field). Settlement remains locked.
+```sh
+npm install
+npm run x402:check
+```
 
-Read [the sponsor configuration and acceptance criteria](docs/X402_GATEWAY_SETUP.md).
+For a real **0.1 Testnet CCD** attempt, use only a locally controlled **Agent #1323 Owner signing key**, set in your own temporary shell environment under `TRUSTGATE_OWNER_PRIVATE_KEY` (32-byte Ed25519 hex). **Do not paste keys into messages, a website, GitHub issues, an `.env` committed file, or Vercel.** If you cannot safely access your local signing key, skip this step. The client shows exact payment scope and demands interactive typed confirmation:
 
-### Read-only owner wallet challenge inspection (v0.8 follow-up)
+```sh
+npm run x402:pay
+```
 
-The `/x402-gateway` page includes an owner-only **HTTP 402 preflight**. When configured, it uses the official Concordium browser wallet to sign the exact scoped access intent and requests the real server-generated payment challenge. The client checks network, merchant, 0.1 Testnet CCD, announced sponsor and protocol-header consistency. The page never generates `PAYMENT-SIGNATURE`, asks for a wallet private key, or submits a transaction. While the gateway remains disabled, this inspection stops before a wallet signature is requested. This is **not** a completed CCD payment client.
+After confirmation the script builds an Owner-signed access intent, validates the actual HTTP 402 challenge, calls `ExactConcordiumScheme.createPaymentPayload`, sends the resulting `PAYMENT-SIGNATURE` to the resource, and reports a public transaction hash **only if the server returns verified paid evidence**. No automatic retries. On ambiguous settlement, inspect the Owner and Merchant's Testnet chain activity before attempting another transfer. This is a real-payment CLI, not a dry-run or a requirement to share secret material.
 
-The first-party Sponsor adds a separate **eight settlement-call UTC daily cap** atomically enforced in Upstash Redis, in addition to minute quotas. It bounds the number of signing attempts, **not** the CCD fee amount; the sponsor must remain disabled pending funds, key custody, monitoring, reconciliation and a compatible owner-controlled payment signer. See [setup and verification steps](docs/X402_GATEWAY_SETUP.md).
+The public browser x402 preflight requires only a **non-payment scoped wallet signature** and has already produced `VALID_OFFICIAL_402_CHALLENGE`; it does not transfer funds.
 
-### Concordium Wallet sponsor-first checkout (native, gated)
-
-The browser-wallet route at [x402 Gateway](https://trustgate-ai.vercel.app/x402-gateway) now offers a separate **native sponsored CCD Testnet transfer**, using the official wallet's `sendSponsoredTransaction` API. The server prepares a fixed **0.1 Testnet CCD** transaction with Sponsor signature **only after** owner-signed access intent, live Agent badge checks, account/authority checks, sufficient owner CCD and atomic Redis rate/replay reservations. The wallet must explicitly review, co-sign and submit; the backend does not silently transfer funds. A rate-limited `/api/x402/resource?mode=browser-inspect` route independently checks finalized on-chain transaction scope and reports read-only evidence.
-
-This is **not yet the `@x402/concordium/exact/client` sender-first `PAYMENT-SIGNATURE` protocol** and does **not** unlock the paid x402 endpoint. Tests with public RFC Ed25519 keys demonstrate SDK V1 sponsor signing, not live settlement. The Production Sponsor lacks securely configured signing credentials, so the checkout remains locked until the owner configures them privately in Vercel, and every Testnet wallet transfer requires explicit approval. [Protocol comparison and operating instructions](docs/X402_GATEWAY_SETUP.md).
-
-### Sponsor and Merchant on-chain account checks (read-only)
-
-The x402 Gateway includes a **Check on-chain** action backed by `GET /api/sponsor/accounts`. It queries the actual Concordium Testnet account state without connecting a wallet or signing a transaction; a shared Redis rate limit of 15 checks/minute protects the public RPC path. The response distinguishes positive available Sponsor CCD from unavailable RPC and now reports whether a configured **single Ed25519 signing key matches the Sponsor's active on-chain credential** (`signingKeyVerified`), without revealing signing material. The first-party facilitator requires both a funded account **and** a verified signer key (single-key signature thresholds only) before constructing its fee-paying SDK. Invalid keys, incompatible multi-signature accounts and RPC failures all fail closed. The check does **not** claim sufficient gas or settled payments. Sponsor payment flags are still disabled.
-
-### Independent finalization verifier (source-level, no payment executed)
-
-Paid x402 delivery now requires **two separate confirmations**: a successful SDK facilitator result and a **fresh Testnet gRPC read** of the finalized block-item summary. The independent check binds the actual transaction hash, Agent #1323 sender, Merchant receiver, exact 100000 microCCD transfer and fee-paying Sponsor; a failed/committed transaction, RPC outage or mismatch returns 503 and leaves the Redis reservation locked for reconciliation. Tests include wrong sender, wrong sponsor, wrong recipient/amount/hash, non-finalization and RPC errors. This check has **not yet seen a live x402 payment**; it must not be described as proven settlement.
-
-## Production path: real x402 settlement
-
-A genuine Concordium x402 flow has **not** been completed or verified with a real Testnet payment. The official `@x402/concordium` package supports client, server and facilitator components; however, TrustGate cannot claim agent payments or payment authorization without an actual Testnet settlement to a separate receiving account and a verifiable transaction receipt. The [x402 integration checklist](docs/X402_INTEGRATION_PLAN.md) records the necessary steps and strict acceptance criteria.
-
-**Owner-confirmed live test:** A fresh v0.5 Policy Witness receipt was verified on Production on 2026-11-20 at `11:47:33Z`: `SIGNED_REQUEST_POLICY_AND_BADGE_VERIFIED`, with all six checks true (integrity, request binding, policy, owner signature, registry and Agent Card). See [Live Proof evidence](docs/LIVE_PROOF_EVIDENCE.md). The Production Attack Lab was subsequently owner-tested: original receipt ACCEPTED and forged policy, signature, and metadata each REJECTED with the expected codes (4/4). See [Live Proof evidence](docs/LIVE_PROOF_EVIDENCE.md).
+Read the [exact payment setup and recovery guide](docs/X402_GATEWAY_SETUP.md), [x402 integration plan](docs/X402_INTEGRATION_PLAN.md) and [hackathon submission checklist](docs/CONCORDIUM_SUBMISSION.md).
 
 ## Independent third-party verification (v0.6)
 
