@@ -3,22 +3,50 @@
 // DO NOT paste an account key into ChatGPT, GitHub, Vercel or the website.
 // The key is read from the local process environment and never logged/saved.
 import {createInterface} from 'node:readline/promises';
+import {readFileSync,realpathSync,statSync} from 'node:fs';
+import {isAbsolute,relative,sep} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {
-  inspectExactClientReadiness,submitExactTestnetPayment
+  buildOwnerSignerFromWalletExport,inspectExactClientReadiness,submitExactTestnetPayment
 } from '../lib/x402-exact-local-client.js';
 
 function usage(){
   console.log('TrustGate AI — official Concordium x402 exact · Testnet only');
   console.log('Usage: node scripts/x402-exact-local.mjs --check');
-  console.log('       node scripts/x402-exact-local.mjs --pay');
-  console.log('For --pay set TRUSTGATE_OWNER_PRIVATE_KEY in your LOCAL shell only.');
+  console.log('       node scripts/x402-exact-local.mjs --pay --wallet-file ABSOLUTE_PATH_TO_ACCOUNT_EXPORT');
+  console.log('For --pay provide a LOCAL Testnet account export file OR set TRUSTGATE_OWNER_PRIVATE_KEY in your local shell.');
+  console.log('Account export must remain OUTSIDE this repository and must not contain a seed phrase.');
   console.log('The key must control the registered Agent #1323 Owner account.');
   console.log('Do NOT store that key in this repository or submit it to an online form.');
 }
 
+function readLocalAccountExport(filePath) {
+  let actual,root;
+  try {
+    actual=realpathSync(filePath);
+    root=realpathSync(fileURLToPath(new URL('..',import.meta.url)));
+  } catch { throw Error('LOCAL_OWNER_EXPORT_FILE_UNAVAILABLE'); }
+  // Reject even symlinked exports under the Git repository: easy to commit by mistake.
+  const rel=relative(root,actual);
+  if(rel==='' || (!rel.startsWith('..'+sep) && rel!=='..' && !isAbsolute(rel)))
+    throw Error('LOCAL_OWNER_EXPORT_MUST_BE_OUTSIDE_REPOSITORY');
+  let contents;
+  try {
+    const stat=statSync(actual);
+    if(!stat.isFile() || stat.size>131072) throw Error('bad size');
+    contents=readFileSync(actual,'utf8');
+  } catch { throw Error('LOCAL_OWNER_EXPORT_FILE_INVALID'); }
+  return buildOwnerSignerFromWalletExport(contents);
+}
+
 async function main(){
   const cmd=process.argv[2];
-  if(!['--check','--pay'].includes(cmd)){usage();process.exitCode=2;return;}
+  const rest=process.argv.slice(3);
+  const fileArg=cmd==='--pay' && rest.length===2 && rest[0]==='--wallet-file' && rest[1]
+    ?rest[1]:null;
+  if(!['--check','--pay'].includes(cmd) || (rest.length!==0 && !fileArg)){
+    usage();process.exitCode=2;return;
+  }
   if(process.env.VERCEL || process.env.CI){
     throw Error('LOCAL_ONLY_SIGNER_ENVIRONMENT_REQUIRED');
   }
@@ -46,11 +74,17 @@ async function main(){
     return;
   }
   const ownerPrivateKey=process.env.TRUSTGATE_OWNER_PRIVATE_KEY;
-  if(!/^[a-fA-F0-9]{64}$/.test(ownerPrivateKey||''))
-    throw Error('OWNER_LOCAL_SIGNER_REQUIRED: set a 32-byte Ed25519 account key in your local process environment only');
+  const ownerExportFile=fileArg||process.env.TRUSTGATE_OWNER_WALLET_EXPORT;
+  if(ownerPrivateKey && ownerExportFile)
+    throw Error('ONLY_ONE_LOCAL_OWNER_SIGNER_ALLOWED');
+  if(!ownerPrivateKey && !ownerExportFile)
+    throw Error('OWNER_LOCAL_SIGNER_REQUIRED: use --wallet-file outside the repository or set the local private key');
+  if(ownerPrivateKey && !/^[a-fA-F0-9]{64}$/.test(ownerPrivateKey))
+    throw Error('OWNER_LOCAL_SIGNER_REQUIRED: expected a 32-byte Ed25519 account key');
+  const ownerSigner=ownerExportFile?readLocalAccountExport(ownerExportFile):undefined;
   console.log('Creating fresh signed access intent and official x402 exact sender payment...');
   const proof=await submitExactTestnetPayment({
-    ownerPrivateKey,
+    ownerPrivateKey,ownerSigner,
     onStage:(stage)=>console.log(stage)
   });
   console.log(JSON.stringify(proof,null,2));
