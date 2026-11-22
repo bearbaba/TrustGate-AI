@@ -35,6 +35,15 @@
 <p><strong>Important:</strong> this is a <em>native sponsored CCD checkout</em>, separate from the sender-first <code>@x402/concordium/exact/client</code> payload. A verified transfer here is not yet the x402 paid-resource protocol.</p>
 <button class="outline" id="sponsoredWalletSend" type="button" disabled>Checking payment prerequisites…</button>
 <button class="outline" id="sponsoredInspect" type="button" disabled>Verify finalized transfer ↗</button>
+<button class="outline" id="sponsoredDownload" type="button" disabled>Download inspection JSON ↓</button>
+<div class="x402-recover">
+<label for="sponsoredHash">Recover a submitted Concordium Testnet transfer</label>
+<div class="x402-recover-input">
+<input id="sponsoredHash" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="70" placeholder="Paste a 64-character transaction hash" aria-describedby="sponsoredHashHelp">
+<button class="outline" id="sponsoredForget" type="button" disabled>Clear local record</button>
+</div>
+<p id="sponsoredHashHelp">You can verify a transaction after refreshing this page, even while the payment gateway is locked. Only the public transaction hash is remembered in this browser tab; no signatures or wallet credentials are saved. Verification does not grant access to a paid x402 resource.</p>
+</div>
 <div class="status" id="sponsoredWalletStatus" role="status" aria-live="polite">Checking live Gateway configuration and Sponsor signing-key ownership. No wallet popup while locked.</div>
 <pre class="x402-output" id="sponsoredWalletResult" aria-label="Native sponsored transfer status"></pre>
 </section>

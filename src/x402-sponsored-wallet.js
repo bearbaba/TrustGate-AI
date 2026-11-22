@@ -4,6 +4,10 @@ import { Transaction } from '@concordium/web-sdk/transactions';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
 import {evaluateWalletSponsorReadiness} from '../lib/x402-wallet-readiness.js';
 import {
+  LAST_NATIVE_TX_KEY,normalizeNativeTransactionHash,shouldHoldNativeCheckout,
+  buildNativeInspectionRecord
+} from '../lib/x402-wallet-recovery.js';
+import {
   assertWalletTestnet,createUnsignedX402Intent,buildX402SignedMessage,
   X402_SCOPE
 } from '../lib/x402-client-intent.js';
@@ -13,7 +17,13 @@ const button=$('sponsoredWalletSend');
 const inspectButton=$('sponsoredInspect');
 const status=$('sponsoredWalletStatus');
 const output=$('sponsoredWalletResult');
+const hashField=$('sponsoredHash');
+const forgetButton=$('sponsoredForget');
+const downloadButton=$('sponsoredDownload');
 let submittedHash=null;
+let submittedVerified=false;
+let inspectionInProgress=false;
+let lastInspection=null;
 let checkoutReady=false;
 let readinessSerial=0;
 let signingInProgress=false;
@@ -21,6 +31,48 @@ let signingInProgress=false;
 function report(message,good=false){
   status.className='status '+(good?'good':'');
   status.textContent=message;
+}
+
+function refreshRecoveryButtons(){
+  inspectButton.disabled=inspectionInProgress ||
+    normalizeNativeTransactionHash(hashField?.value)===null;
+  forgetButton.disabled=!submittedHash;
+  downloadButton.disabled=!lastInspection ||
+    normalizeNativeTransactionHash(hashField?.value)!==lastInspection.transaction;
+}
+
+function refreshCheckoutButton(){
+  const unresolved=shouldHoldNativeCheckout(submittedHash,submittedVerified);
+  button.disabled=!checkoutReady || unresolved || signingInProgress;
+  button.textContent=!checkoutReady?
+    'Checkout locked · Sponsor setup required':
+    unresolved?'Verify previous transfer before another payment':
+      'Review and sign 0.1 Testnet CCD in Wallet ↗';
+}
+
+function keepPublicTransactionHash(hash){
+  const normalized=normalizeNativeTransactionHash(hash);
+  if(!normalized)return;
+  submittedHash=normalized;
+  submittedVerified=false;
+  lastInspection=null;
+  hashField.value=normalized;
+  try{sessionStorage.setItem(LAST_NATIVE_TX_KEY,normalized);}catch{}
+  refreshRecoveryButtons();
+  refreshCheckoutButton();
+}
+
+function restorePublicTransactionHash(){
+  let previous;
+  try{previous=sessionStorage.getItem(LAST_NATIVE_TX_KEY);}catch{}
+  const normalized=normalizeNativeTransactionHash(previous);
+  if(normalized){
+    submittedHash=normalized;
+    submittedVerified=false;
+    hashField.value=normalized;
+  }
+  refreshRecoveryButtons();
+  refreshCheckoutButton();
 }
 
 function requireScope(response,account,merchant,sponsor){
@@ -73,11 +125,10 @@ async function refreshWalletReadiness(){
     }
     if(serial!==readinessSerial)return;
     checkoutReady=readiness.ready;
-    button.disabled=!checkoutReady;
-    button.textContent=checkoutReady?
-      'Review and sign 0.1 Testnet CCD in Wallet ↗':
-      'Checkout locked · Sponsor setup required';
-    report(readiness.message,checkoutReady);
+    refreshCheckoutButton();
+    report(shouldHoldNativeCheckout(submittedHash,submittedVerified) && checkoutReady?
+      'A transaction was already submitted in this tab. Verify it before starting another payment; a repeated transfer may move more CCD.':
+      readiness.message,checkoutReady && !shouldHoldNativeCheckout(submittedHash,submittedVerified));
   }catch{
     if(serial!==readinessSerial)return;
     checkoutReady=false;
@@ -94,10 +145,15 @@ async function submitSponsoredWalletTransfer(){
     report('Checkout is locked: complete secure Sponsor setup and refresh readiness first.');
     return;
   }
+  if(shouldHoldNativeCheckout(submittedHash,submittedVerified)){
+    report('A previous transfer is still unverified. Check its transaction hash or explicitly clear your local record. Clearing does not cancel a blockchain transfer.');
+    return;
+  }
   signingInProgress=true;
   button.disabled=true;
   inspectButton.disabled=true;
-  submittedHash=null;
+  lastInspection=null;
+  downloadButton.disabled=true;
   output.textContent='';
   try{
     report('Checking gateway and Sponsor signing authority before requesting a wallet signature…');
@@ -137,8 +193,7 @@ async function submitSponsoredWalletTransfer(){
     const hash=typeof result==='string'?result:result?.toString?.();
     if(typeof hash!=='string'||!/^[a-f0-9]{64}$/i.test(hash))
       throw Error('WALLET_TRANSACTION_HASH_NOT_RETURNED');
-    submittedHash=hash;
-    inspectButton.disabled=false;
+    keepPublicTransactionHash(hash);
     output.textContent=JSON.stringify({
       state:'SUBMITTED_NOT_FINALIZED',network:X402_SCOPE.network,
       transaction:hash,explorer:'https://ccdexplorer.io/testnet/transaction/'+hash,
@@ -151,26 +206,78 @@ async function submitSponsoredWalletTransfer(){
     report('Sponsored wallet checkout not completed: '+(error?.message||'wallet error'));
   }finally{
     signingInProgress=false;
-    button.disabled=!checkoutReady;
+    refreshCheckoutButton();
+    refreshRecoveryButtons();
   }
 }
 
 async function inspectSubmitted(){
-  if(!submittedHash)return;
-  inspectButton.disabled=true;
+  const hash=normalizeNativeTransactionHash(hashField?.value);
+  if(!hash){
+    report('Enter a valid 64-character Concordium Testnet transaction hash to verify it.');
+    return;
+  }
+  inspectionInProgress=true;
+  lastInspection=null;
+  refreshRecoveryButtons();
   try{
-    report('Checking independent finalization on Concordium Testnet…');
-    const proof=await getJson('/api/x402/resource?mode=browser-inspect&hash='+encodeURIComponent(submittedHash));
-    output.textContent=JSON.stringify(proof,null,2);
-    report(proof.verified?
-      'Finalized 0.1 Testnet CCD transfer matches sender, Merchant and Sponsor. This is native wallet payment proof, not a completed x402 exact resource claim.':
-      'Not verified: '+proof.code+'. It may still be pending, or must be reconciled.',proof.verified);
-  }catch(error){report('Finalization inspection unavailable: '+(error?.message||'RPC error'));}
-  finally{inspectButton.disabled=false;}
+    report('Checking public transaction '+hash.slice(0,10)+'… against Concordium Testnet. No wallet signature required.');
+    const proof=await getJson('/api/x402/resource?mode=browser-inspect&hash='+encodeURIComponent(hash));
+    if(normalizeNativeTransactionHash(proof.transaction)!==hash)
+      throw Error('INSPECTION_HASH_MISMATCH');
+    const inspection=buildNativeInspectionRecord(proof,new Date().toISOString());
+    lastInspection=inspection.verified?inspection:null;
+    output.textContent=JSON.stringify(inspection,null,2);
+    if(submittedHash===hash && inspection.verified)submittedVerified=true;
+    refreshCheckoutButton();
+    report(inspection.verified?
+      'Finalized CCD transfer matches owner, Merchant, Sponsor and amount on-chain. This is NOT proof of a paid x402 session.':
+      'Not yet verified ('+inspection.code+'). Do not assume funds failed to move or sign again; check the transaction in an explorer.',inspection.verified);
+  }catch(error){
+    report('Finalization inspection unavailable: '+(error?.message||'RPC error')+'. Do not resubmit a payment without reconciliation.');
+  }finally{
+    inspectionInProgress=false;
+    refreshRecoveryButtons();
+  }
 }
 
 button?.addEventListener('click',submitSponsoredWalletTransfer);
 inspectButton?.addEventListener('click',inspectSubmitted);
+hashField?.addEventListener('input',()=>{
+  if(lastInspection?.transaction!==normalizeNativeTransactionHash(hashField.value))
+    lastInspection=null;
+  refreshRecoveryButtons();
+});
+downloadButton?.addEventListener('click',()=>{
+  if(!lastInspection || lastInspection.verified!==true ||
+      normalizeNativeTransactionHash(hashField.value)!==lastInspection.transaction)return;
+  // A browser-captured verification snapshot, NOT an issuer attestation.
+  const blob=new Blob([JSON.stringify(lastInspection,null,2)+'\n'],{
+    type:'application/json'
+  });
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download='trustgate-native-chain-inspection-'+lastInspection.transaction.slice(0,12)+'.json';
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+forgetButton?.addEventListener('click',()=>{
+  if(!submittedHash)return;
+  // Explicitly warn that forgetting a browser hash does NOT undo a transfer.
+  if(!window.confirm('This only clears the public hash saved in this tab. It does NOT cancel, refund or invalidate an on-chain transaction. Have you checked its status in CCDExplorer?'))return;
+  try{sessionStorage.removeItem(LAST_NATIVE_TX_KEY);}catch{}
+  submittedHash=null;
+  submittedVerified=false;
+  lastInspection=null;
+  hashField.value='';
+  refreshRecoveryButtons();
+  refreshCheckoutButton();
+  report('Local transaction hash cleared. This does not reverse a transfer or prove it failed.');
+});
+restorePublicTransactionHash();
 
 // The Gateway refresh button also rechecks Sponsor readiness. The existing
 // Gateway script dispatches this after its public status request resolves.
