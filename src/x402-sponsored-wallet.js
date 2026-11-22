@@ -1,5 +1,5 @@
 import { detectConcordiumProvider } from '@concordium/browser-wallet-api-helpers';
-import { AccountAddress } from '@concordium/web-sdk';
+
 import { Transaction } from '@concordium/web-sdk/transactions';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
 import {connectOwnerWallet} from '../lib/x402-wallet-account.js';
@@ -206,7 +206,12 @@ async function submitSponsoredWalletTransfer(){
     // transfer and signMessage() must never be used as the payment signature.
     stage='wallet transaction approval/submission';
     walletSubmissionAttempted=true;
-    const result=await wallet.sendSponsoredTransaction(AccountAddress.fromBase58(account),tx);
+    // Concordium Wallet 2.x currently checks the dApp's allowlisted accounts
+    // with a direct string includes(accountAddress). Unlike signMessage(),
+    // sendSponsoredTransaction() does not normalize AccountAddress objects
+    // to Base58 before forwarding to the background worker. Always pass the
+    // already-verified literal Base58 owner string, not AccountAddress.fromBase58().
+    const result=await wallet.sendSponsoredTransaction(account,tx);
     const hash=typeof result==='string'?result:result?.toString?.();
     if(typeof hash!=='string'||!/^[a-f0-9]{64}$/i.test(hash))
       throw Error('WALLET_TRANSACTION_HASH_NOT_RETURNED');
