@@ -143,7 +143,8 @@ test('SDK sponsor-first builder creates authentic V1 transaction with fixed CCD 
   // Demonstrate interoperability with the SDK parser used by the
   // browser-wallet adapter, without actually submitting a payment.
   const parsed=Transaction.signableFromJSON(tx);
-  const json=JSON.parse(JSON.stringify(Transaction.toJSON(parsed)));
+  const json=JSON.parse(JSON.stringify(Transaction.toJSON(parsed),
+    (_key,value)=>typeof value==='bigint'?Number(value):value));
   assert.equal(json.payload.type,'transfer');
   assert.equal(json.payload.toAddress,merchant);
   assert.equal(json.payload.amount,'100000');
