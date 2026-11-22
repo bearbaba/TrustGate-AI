@@ -1,6 +1,6 @@
 # TrustGate AI — Real Concordium x402 Integration Plan
 
-**Status: Server-side config-gated gateway implemented in v0.7; no merchant, sponsor or durable store configured on Production, no real x402 transaction executed.** This checklist defines actual completion, not a simulated payment.
+**Status (2026-11-22): Merchant, verified on-chain fee Sponsor, atomic Redis and official x402 exact Testnet quote are configured in Production. Owner-signed HTTP 402 preflight has succeeded, and a local owner-key sender-first client has been implemented and tested offline. No real x402 settlement transaction hash or paid-resource receipt is yet verified.** This checklist defines actual completion, not a simulated payment.
 
 ## Why x402 matters
 
