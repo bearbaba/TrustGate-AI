@@ -22,7 +22,8 @@
 <section class="panel x402-panel"><div class="x402-head"><div><small>02 / OFFICIAL PROTOCOL</small><h2>x402 payment requirements</h2></div></div>
 <p>A configured server builds its requirements using <code>@x402/core</code> and <code>@x402/concordium</code>. It advertises exact Testnet CCD amount, merchant address and an actual sponsor announced by the facilitator. This is not a simulated paid checkout.</p>
 <button class="outline" id="testQuote" type="button" disabled>Inspect protocol quote ↗</button>
-<pre id="quoteResult" class="x402-output">Gateway is locked until configured.</pre>
+<pre id="quoteResult" class="x402-output">Checking official Testnet quote…</pre>
+<p class="x402-help"><strong>Official x402 exact checkout:</strong> Concordium Wallet for Web currently exposes native <code>sendSponsoredTransaction</code> but not the sender-only transaction-signing API required by x402 exact. TrustGate therefore provides an <a href="https://github.com/bearbaba/TrustGate-AI#local-only-official-x402-exact-acceptance-test" target="_blank" rel="noopener noreferrer">Owner-local x402 exact client ↗</a> with an explicit payment confirmation. Never enter your account signing key on this website or share it with anyone. <strong>Live exact settlement has not yet been demonstrated.</strong></p>
 </section>
 <section class="panel x402-panel"><div class="x402-head"><div><small>03 / OWNER-WALLET CHALLENGE PREFLIGHT</small><h2>Verify the HTTP 402 boundary</h2></div></div>
 <p>Once the sponsor is configured, the registered Agent #1323 owner can connect Concordium Wallet, sign a <strong>non-payment access request</strong>, and inspect a verified HTTP 402 challenge. This action does not sign or broadcast any transaction, charge CCD, or grant spending authority. While the gateway is locked, no wallet popup is requested.</p>
