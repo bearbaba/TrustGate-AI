@@ -19,9 +19,11 @@ const status=$('sponsoredWalletStatus');
 const output=$('sponsoredWalletResult');
 const hashField=$('sponsoredHash');
 const forgetButton=$('sponsoredForget');
+const downloadButton=$('sponsoredDownload');
 let submittedHash=null;
 let submittedVerified=false;
 let inspectionInProgress=false;
+let lastInspection=null;
 let checkoutReady=false;
 let readinessSerial=0;
 let signingInProgress=false;
@@ -35,6 +37,8 @@ function refreshRecoveryButtons(){
   inspectButton.disabled=inspectionInProgress ||
     normalizeNativeTransactionHash(hashField?.value)===null;
   forgetButton.disabled=!submittedHash;
+  downloadButton.disabled=!lastInspection ||
+    normalizeNativeTransactionHash(hashField?.value)!==lastInspection.transaction;
 }
 
 function refreshCheckoutButton(){
@@ -51,6 +55,7 @@ function keepPublicTransactionHash(hash){
   if(!normalized)return;
   submittedHash=normalized;
   submittedVerified=false;
+  lastInspection=null;
   hashField.value=normalized;
   try{sessionStorage.setItem(LAST_NATIVE_TX_KEY,normalized);}catch{}
   refreshRecoveryButtons();
@@ -211,6 +216,7 @@ async function inspectSubmitted(){
     return;
   }
   inspectionInProgress=true;
+  lastInspection=null;
   refreshRecoveryButtons();
   try{
     report('Checking public transaction '+hash.slice(0,10)+'… against Concordium Testnet. No wallet signature required.');
@@ -218,6 +224,7 @@ async function inspectSubmitted(){
     if(normalizeNativeTransactionHash(proof.transaction)!==hash)
       throw Error('INSPECTION_HASH_MISMATCH');
     const inspection=buildNativeInspectionRecord(proof,new Date().toISOString());
+    lastInspection=inspection.verified?inspection:null;
     output.textContent=JSON.stringify(inspection,null,2);
     if(submittedHash===hash && inspection.verified)submittedVerified=true;
     refreshCheckoutButton();
@@ -234,7 +241,27 @@ async function inspectSubmitted(){
 
 button?.addEventListener('click',submitSponsoredWalletTransfer);
 inspectButton?.addEventListener('click',inspectSubmitted);
-hashField?.addEventListener('input',refreshRecoveryButtons);
+hashField?.addEventListener('input',()=>{
+  if(lastInspection?.transaction!==normalizeNativeTransactionHash(hashField.value))
+    lastInspection=null;
+  refreshRecoveryButtons();
+});
+downloadButton?.addEventListener('click',()=>{
+  if(!lastInspection || lastInspection.verified!==true ||
+      normalizeNativeTransactionHash(hashField.value)!==lastInspection.transaction)return;
+  // A browser-captured verification snapshot, NOT an issuer attestation.
+  const blob=new Blob([JSON.stringify(lastInspection,null,2)+'\n'],{
+    type:'application/json'
+  });
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download='trustgate-native-chain-inspection-'+lastInspection.transaction.slice(0,12)+'.json';
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
 forgetButton?.addEventListener('click',()=>{
   if(!submittedHash)return;
   // Explicitly warn that forgetting a browser hash does NOT undo a transfer.
@@ -242,6 +269,7 @@ forgetButton?.addEventListener('click',()=>{
   try{sessionStorage.removeItem(LAST_NATIVE_TX_KEY);}catch{}
   submittedHash=null;
   submittedVerified=false;
+  lastInspection=null;
   hashField.value='';
   refreshRecoveryButtons();
   refreshCheckoutButton();
