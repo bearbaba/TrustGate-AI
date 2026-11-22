@@ -62,6 +62,10 @@ test('browser offers hash verification while checkout is locked, and saves publi
   const client=await readFile(new URL('../src/x402-sponsored-wallet.js',import.meta.url),'utf8');
   assert.match(html,/id="sponsoredHash"/);
   assert.match(html,/id="sponsoredForget"/);
+  assert.match(html,/id="sponsoredOwnerHistory"/);
+  assert.match(html,/ccdexplorer\.io\/testnet\/account\/34C1ozW8edKtBmA8FUFoR4aBys8ofuwtRmYqqbzNVPAsATT4wk/);
+  assert.match(html,/a non-secret unresolved-submission flag/);
+  assert.match(html,/no user-approved CCD payment or finalized settlement has yet been independently confirmed/);
   assert.match(html,/id="sponsoredDownload"[^>]*disabled/);
   assert.match(html,/id="sponsoredInspect"[^>]*disabled/);
   assert.match(client,/sessionStorage\.setItem\(LAST_NATIVE_TX_KEY,normalized\)/);
