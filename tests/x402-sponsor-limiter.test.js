@@ -73,7 +73,7 @@ test('Redis failure, indeterminate answers and missing config always fail closed
   await assert.rejects(()=>enforceSponsorRateLimit(config,'unknown'));
 });
 
-test('wallet preparation is limited to two per minute and four per day',async()=>{
+test('wallet preparation is limited to two per minute and twelve per day',async()=>{
   const requests=[];
   assert.equal(await enforceSponsorRateLimit(config,'prepare',{
     now:Date.UTC(2026,10,21,6,0,0),
@@ -83,8 +83,28 @@ test('wallet preparation is limited to two per minute and four per day',async()=
   assert.equal(cmd[2],'2');
   assert.match(cmd[3],/^tg:x402:sponsor:limit:prepare:\d+$/);
   assert.match(cmd[4],/^tg:x402:sponsor:daily-prepare:\d+$/);
-  assert.deepEqual(cmd.slice(5),['120','2','172800','4']);
+  assert.deepEqual(cmd.slice(5),['120','2','172800','12']);
   assert.equal(await enforceSponsorRateLimit(config,'prepare',{
     fetchImpl:mock(0,[])
   }),false);
+});
+
+test('rate limit diagnostics distinguish minute and day without weakening guards',async()=>{
+  const at=Date.UTC(2026,10,22,6,52,30);
+  assert.deepEqual(await enforceSponsorRateLimit(config,'prepare',{
+    now:at,fetchImpl:mock(-1,[]),includeReason:true
+  }),{ok:false,scope:'minute',retryAfterSeconds:30});
+  assert.deepEqual(await enforceSponsorRateLimit(config,'prepare',{
+    now:at,fetchImpl:mock(-2,[]),includeReason:true
+  }),{ok:false,scope:'daily',retryAfterSeconds:Math.ceil((86400000-(at%86400000))/1000)});
+  assert.equal(await enforceSponsorRateLimit(config,'prepare',{
+    now:at,fetchImpl:mock(-2,[])
+  }),false);
+  assert.equal(await enforceSponsorRateLimit(config,'prepare',{
+    now:at,fetchImpl:mock(-1,[])
+  }),false);
+  assert.deepEqual(await enforceSponsorRateLimit(config,'prepare',{
+    now:at,fetchImpl:mock(1,[]),includeReason:true
+  }),{ok:true});
+  assert.match(SPONSOR_RATE_LIMIT_LUA,/Check both caps before incrementing either/);
 });
