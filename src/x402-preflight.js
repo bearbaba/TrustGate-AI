@@ -1,5 +1,6 @@
 import { detectConcordiumProvider } from '@concordium/browser-wallet-api-helpers';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
+import {connectOwnerWallet} from '../lib/x402-wallet-account.js';
 import {
   acquireWalletOperation,getActiveWalletOperation,describeWalletPromptError,WALLET_OPERATION_EVENT
 } from '../lib/x402-wallet-ui-lock.js';
@@ -26,6 +27,7 @@ function encodeHeader(value){
 }
 
 async function inspectChallenge(){
+  let stage='wallet preflight';
   const release=acquireWalletOperation('preflight');
   if(!release){
     report('Another TrustGate wallet request is active. Complete or reject it before opening the HTTP 402 preflight.');
@@ -45,20 +47,23 @@ async function inspectChallenge(){
     if(typeof config.merchant!=='string' || !config.merchant){
       throw Error('Merchant is not configured.');
     }
-    report('Connecting to registered owner wallet on Concordium Testnet…');
+    report('Using an existing Agent #1323 owner connection, or requesting connection if needed…');
+    stage='wallet owner connection';
     const wallet=await detectConcordiumProvider(4000);
     if(typeof wallet?.signMessage!=='function')throw Error('Wallet cannot sign the scoped message.');
-    const account=await wallet.connect();
+    const {account}=await connectOwnerWallet(wallet);
     assertWalletTestnet(account,await wallet.getSelectedChain());
     const nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),
       b=>b.toString(16).padStart(2,'0')).join('');
     const intent=createUnsignedX402Intent(account,config.merchant,nonce,Date.now());
     report('Review the request in Concordium Wallet. This is NOT a transfer signature.');
+    stage='non-payment message signature';
     const signature=await wallet.signMessage(account,buildX402SignedMessage(intent));
     if(!signature || typeof signature!=='object' || Array.isArray(signature)){
       throw Error('Wallet returned an invalid message signature.');
     }
     report('Verifying owner signature and live Agent #1323 badge on the backend…');
+    stage='HTTP 402 challenge verification';
     // Intentionally omit PAYMENT-SIGNATURE. This can never settle a payment.
     const challenge=await fetch('/api/x402/resource',{
       method:'GET',headers:{'X-Trustgate-Intent':encodeHeader({...intent,signature})},
@@ -93,7 +98,7 @@ async function inspectChallenge(){
     },null,2);
     report('HTTP 402 verified. You signed an access request, not a transaction. No CCD moved.',true);
   }catch(error){
-    report('Challenge not verified: '+describeWalletPromptError(error));
+    report('Challenge not verified ('+stage+'): '+describeWalletPromptError(error));
   }finally{
     release();
     button.disabled=!!getActiveWalletOperation();

@@ -4,6 +4,12 @@
 
 The gateway uses the official `@x402/core@2.31.0` and `@x402/concordium@2.31.0` packages for the Concordium `exact` scheme. It is intentionally disabled on the public deployment until all necessary Testnet configuration exists. It must not be presented as real payment settlement before a transaction is verified.
 
+### Reuse an already connected Agent Owner before asking for a new popup
+
+When a user retries either x402 preflight or native payment, TrustGate first calls the official `getMostRecentlySelectedAccount()` wallet API (where available). If it returns the **registered Agent #1323 Owner**, it reuses that account **without** calling `connect()` again. If no account is connected, `connect()` is still user-controlled. If a *different* account is connected, the application refuses instead of silently switching the account or signing with the wrong identity.
+
+The UI now labels the failing stage explicitly: `wallet owner connection`, `non-payment message signature`, `sponsor transaction preparation`, or `wallet transaction approval/submission`. This helps distinguish a stale extension request from a backend issue, without exposing keys or signatures. If the extension itself reports an existing pending popup, the browser cannot cancel that popup on the user's behalf; finish or reject it inside Concordium Wallet, and inspect wallet transaction history before retrying any CCD transfer.
+
 ## Pending Concordium Wallet prompt ("Another prompt is already open")
 
 The owner-signed HTTP 402 preflight and native sponsored transfer use the same Concordium Wallet extension. The two separately bundled client scripts now coordinate a **single page-scoped wallet operation lock**, which disables the other button until the current connect/sign/submit flow completes.
