@@ -33,7 +33,8 @@
 - [ ] Add server-signed receipt issuance (production signing key must be managed securely outside GitHub)
 - [ ] Add durable audit, replay/idempotency protection, rate limits and server-side persistent challenge store **before** enabling paid or write-sensitive flows
 - [ ] Review frontend with screenshots/responsive checks, error handling, and deployed endpoints
-- [ ] Prepare 3-minute hackathon video, proof links, public source, and go-live plan
+- [x] Prepare copy-ready hackathon description, proof links and production plan in docs/CONCORDIUM_SUBMISSION.md
+- [ ] Record/upload a genuine up-to-3-minute demo video; do not claim submitted before owner receives a submission receipt
 - [ ] Complete Encode Club registration and submit before official deadline
 
 ## Scope warning
