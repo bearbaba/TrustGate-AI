@@ -1,6 +1,6 @@
 # TrustGate AI — silent demo storyboard (90–110 seconds)
 
-> Use smooth, continuous screen recordings, large English captions, and **no voiceover**. Show only behavior verified in the actual app. The Testnet badge and transaction proof are real; no payments or x402 settlements have been implemented.
+> Use smooth, continuous screen recordings, large English captions, and **no voiceover**. Show only behavior verified in the actual app. The Testnet Agent Card transaction and signature proofs are real. The x402 Testnet gateway and Sponsor are configured and the wallet-signed HTTP 402 challenge has succeeded, but no x402 payment finalization or paid-resource delivery has yet been independently confirmed. Never imply otherwise.
 
 | Time | On-screen recording | Large caption |
 |---|---|---|
