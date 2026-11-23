@@ -48,3 +48,7 @@ The card bytes are already pinned on-chain. Editing the hosted `public/.well-kno
 
 ## Proof boundary
 An owner-verified active agent and a finalized metadata update do **not** mean the separate policy-review frontend executes x402, transfers CCD, manages agent spending authorizations or persists audits on chain. Those features remain outside the deployed prototype.
+
+## First real x402 exact payment — 2026-11-23 (separate from registry update)
+
+The owner-local official sender-first x402 exact client completed one 0.1 Testnet CCD payment and received the paid-resource response. Public transaction [`0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de`](https://ccdexplorer.io/testnet/transaction/0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de); [full scope and no-key verifier](X402_PAYMENT_EVIDENCE.md). This is not the earlier `setAgentURI` metadata transaction; the separate native browser-wallet signing issue remains unresolved.
