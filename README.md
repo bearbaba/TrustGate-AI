@@ -127,3 +127,5 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) and [the silent demo storyboard](docs/DEM
 
 - Official reference: https://docs.concordium.com/en/mainnet/technical-reference/agent-registry/mcp-service.html
 - Programme: https://www.concordium.com/article/concordium-trusted-agents-hackathon-encode-club
+
+**Browser wallet integer failure:** If Concordium Wallet shows `value is not an integer` after review, the newer client runs a non-signing wallet transport preflight and prints safe numeric field types. This is diagnostic, not evidence that the browser extension bug is fixed; see [x402 setup and troubleshooting](docs/X402_GATEWAY_SETUP.md). Do not retry an ambiguous payment blindly.
