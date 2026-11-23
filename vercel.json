@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "git": {
+    "deploymentEnabled": {
+      "test/*": false
+    }
+  },
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "public",
