@@ -115,9 +115,12 @@ for (const button of document.querySelectorAll('[data-view]')) {
 }
 
 /**
- * The Decision Lab cannot authorize transfers. Show the actual public x402
- * readiness state instead of stale claims embedded in the HTML template.
- * This GET is unauthenticated, does not connect wallets or initiate payment.
+ * A public finalized x402 exact Testnet transfer has already been independently
+ * verified; its immutable transaction link appears in index.html. This GET
+ * ONLY checks whether new Gateway requests are configured and ready. The
+ * status enum CONFIGURED_NOT_PAYMENT_TESTED predates the historic payment and
+ * does NOT mean that a successful historic exact transfer does not exist.
+ * Never equate readiness with historical settlement or browser-wallet support.
  */
 async function refreshGatewayStatus() {
   const pill=byId('homePaymentStatus');
@@ -127,23 +130,22 @@ async function refreshGatewayStatus() {
     const response=await fetch('/api/x402/status',{cache:'no-store'});
     if(!response.ok)throw Error('GATEWAY_STATUS_UNAVAILABLE');
     const data=await response.json();
+    // The public historic proof is unchanged by current gateway readiness.
+    pill.textContent='x402 exact · 1 VERIFIED TESTNET PAYMENT';
     if(data.status==='LOCKED_UNTIL_CONFIGURED'){
-      label.textContent='Locked';
-      detail.textContent='Settlement disabled · prerequisites pending';
-      pill.textContent='x402 TESTNET · LOCKED';
+      label.textContent='Gateway locked';
+      detail.textContent='1 finalized exact payment · new payments currently unavailable';
     }else if(data.status==='CONFIGURED_NOT_PAYMENT_TESTED'){
-      label.textContent='Configured';
-      detail.textContent='No successful settlement proof yet';
-      pill.textContent='x402 TESTNET · UNVERIFIED';
+      label.textContent='1 finalized payment';
+      detail.textContent='0.1 CCD exact · Gateway configured for new requests';
     }else{
-      label.textContent='Unverified';
-      detail.textContent='Read the latest server status in the Gateway';
-      pill.textContent='x402 TESTNET · CHECK STATUS';
+      label.textContent='1 finalized payment';
+      detail.textContent='Historic proof verified · new Gateway status unknown';
     }
   }catch{
-    label.textContent='Unavailable';
-    detail.textContent='Readiness could not be checked; do not assume payments are enabled';
-    pill.textContent='x402 TESTNET · STATUS UNKNOWN';
+    label.textContent='1 finalized payment';
+    detail.textContent='Historic x402 proof verified · new Gateway readiness unavailable';
+    pill.textContent='x402 exact · 1 VERIFIED TESTNET PAYMENT';
   }
 }
 refreshGatewayStatus();
