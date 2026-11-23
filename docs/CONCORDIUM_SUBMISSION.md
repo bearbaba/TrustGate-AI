@@ -5,6 +5,7 @@
 **Official deadline:** 9 December 2026, 23:59 UTC (10 December, 06:59 Vietnam time)  
 **Organizer:** Encode Club × Concordium  
 **Official information:** https://www.concordium.com/article/concordium-trusted-agents-hackathon-encode-club
+**Judge-facing evidence index / silent demo plan:** [REVIEWER_QUICKSTART.md](REVIEWER_QUICKSTART.md)
 
 ## Submission fields
 
