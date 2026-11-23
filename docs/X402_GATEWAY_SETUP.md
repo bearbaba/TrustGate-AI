@@ -305,3 +305,9 @@ Open https://trustgate-ai.vercel.app/x402-gateway to inspect readiness. The gate
 - [ ] Accurate hackathon video showing real 402 → sponsor-settled CCD → paid resource
 
 The current project may demonstrate the **ready-to-integrate software structure** but MUST NOT claim payment execution or full x402 completion yet.
+
+### Native wallet failure diagnosis (Testnet only)
+
+The native sponsored V1 transaction now uses a **5-minute expiry** to allow a human to review the wallet popup; the independent official x402 exact quote still retains a maximum 90-second timeout. No transfer is sent automatically and no signing method has changed. If the wallet returns `Value is not an integer`, the page prints a shareable `WALLET_INTEGER_SERIALIZATION_ERROR` diagnostic containing only the failure stage, fixed error code and recovery advice (no signed intent, Sponsor signature, seed or raw wallet stack).
+
+The message is **diagnostic, not a proven root-cause fix**: the live user's installed wallet may differ from the offline Web SDK test. Do not auto-retry any payment-stage error; the wallet may have submitted before returning an error or without a hash. Inspect Owner account transaction history and reconcile against the Merchant, amount and Sponsor before clearing the per-tab safety hold. The native transfer remains **separate from x402 exact settlement**.

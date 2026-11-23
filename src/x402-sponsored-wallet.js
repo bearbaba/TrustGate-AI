@@ -4,7 +4,7 @@ import { Transaction } from '@concordium/web-sdk/transactions';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
 import {connectOwnerWallet} from '../lib/x402-wallet-account.js';
 import {
-  acquireWalletOperation,getActiveWalletOperation,describeWalletPromptError,WALLET_OPERATION_EVENT
+  acquireWalletOperation,getActiveWalletOperation,describeWalletPromptError,classifyNativeWalletFailure,WALLET_OPERATION_EVENT
 } from '../lib/x402-wallet-ui-lock.js';
 import {evaluateWalletSponsorReadiness} from '../lib/x402-wallet-readiness.js';
 import {
@@ -265,8 +265,22 @@ async function submitSponsoredWalletTransfer(){
   }catch(error){
     const unresolvedSubmission=walletSubmissionAttempted &&
       ' If you approved a transfer, inspect your wallet activity or CCDExplorer before trying again; a missing hash is not evidence of a failed payment.';
-    report('Sponsored wallet checkout not completed ('+stage+'): '+describeWalletPromptError(error)+
-      (unresolvedSubmission||''));
+    const diagnostic=classifyNativeWalletFailure(stage,error);
+    // A safe, copyable diagnostic: no raw signature, signed intent, sponsor
+    // transaction, account keys or stack. No request is retried automatically.
+    output.textContent=JSON.stringify({
+      kind:'TRUSTGATE_NATIVE_WALLET_ERROR_V1',
+      code:diagnostic.code,
+      stage:diagnostic.stage,
+      advice:diagnostic.advice,
+      transactionHashReceived:false,
+      paymentFinalized:false,
+      x402ExactSettlementVerified:false,
+      reconcileBeforeRetry:walletSubmissionAttempted
+    },null,2);
+    report('Sponsored wallet checkout not completed ('+stage+
+      ') ['+diagnostic.code+']: '+describeWalletPromptError(error)+
+      ' '+diagnostic.advice+(unresolvedSubmission||''));
   }finally{
     signingInProgress=false;
     release();

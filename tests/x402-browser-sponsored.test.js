@@ -167,6 +167,20 @@ test('SDK sponsor-first builder creates authentic V1 transaction with fixed CCD 
   assert.equal(json.version,1);
 });
 
+test('native Sponsor approvals have a five-minute window, not the 90-second x402 quote',async()=>{
+  const nowMs=Date.UTC(2026,10,23,1,30,0);
+  const tx=await prepareSponsoredCcdTransaction(sponsorConfig,intent,{
+    nowMs,fetchNonce:async()=>SequenceNumber.create(1n)
+  });
+  assert.equal(Number(tx.header.expiry),Math.floor(nowMs/1000)+300);
+  assert.deepEqual(tx.payload,{type:'transfer',toAddress:merchant,amount:'100000'});
+  const parsed=Transaction.signableFromJSON(tx);
+  assert.equal(parsed.version,1);
+  await assert.rejects(prepareSponsoredCcdTransaction(sponsorConfig,intent,{
+    nowMs:NaN,fetchNonce:async()=>SequenceNumber.create(1n)
+  }),/INVALID_SPONSOR_PREPARE_TIME/);
+});
+
 test('browser inspection only reports public finalized scope; no paid access',async()=>{
   const hash='b'.repeat(64);
   let calls=0;
