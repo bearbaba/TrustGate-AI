@@ -65,7 +65,9 @@ test('browser offers hash verification while checkout is locked, and saves publi
   assert.match(html,/id="sponsoredOwnerHistory"/);
   assert.match(html,/ccdexplorer\.io\/testnet\/account\/34C1ozW8edKtBmA8FUFoR4aBys8ofuwtRmYqqbzNVPAsATT4wk/);
   assert.match(html,/a non-secret unresolved-submission flag/);
-  assert.match(html,/no user-approved CCD payment or finalized settlement has yet been independently confirmed/);
+  assert.match(html,/One owner-approved official sender-first/);
+  assert.match(html,/The browser-wallet native sponsored checkout is a separate workflow and remains unverified/);
+  assert.match(html,/0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de/);
   assert.match(html,/id="sponsoredDownload"[^>]*disabled/);
   assert.match(html,/id="sponsoredInspect"[^>]*disabled/);
   assert.match(client,/sessionStorage\.setItem\(LAST_NATIVE_TX_KEY,normalized\)/);

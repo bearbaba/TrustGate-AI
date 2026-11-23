@@ -1,0 +1,19 @@
+name: Verify real x402 exact Testnet payment (public-only)
+on:
+  push:
+    branches:
+      - evidence/x402-testnet-payment
+permissions:
+  contents: read
+jobs:
+  confirm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Check finalized historical x402 transfer via public Testnet node
+        run: npm run x402:verify-finalized
