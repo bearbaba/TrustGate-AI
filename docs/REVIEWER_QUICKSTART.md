@@ -30,6 +30,12 @@
 - **NOT verified:** any finalized x402 exact transaction, x402 paid resource delivery, a working end-to-end payment through the browser wallet, Mainnet readiness, an external security audit.
 - A Testnet transaction hash is evidence only for its **actual** chain action. The Agent Card hash must never be reused as a payment reference.
 
+## Reproducible verification without any wallet credentials
+
+Clone the repository and run `npm run submission:check` using Node.js 22. The optional, **manual** command reads exactly four public URLs (the Agent Card, Gateway status, protocol quote and Sponsor status); it calculates the pinned Agent Card hash and rejects mismatched network, Merchant, Sponsor or quote. Its nine checks **do not verify an actual payment**. It never requests a wallet signature, submits CCD, touches Blob, or uses the Sponsor's on-chain account RPC. Do not run it as a recurring poll.
+
+Source: [public evidence verifier](../scripts/verify-submission-evidence.mjs). Offline tests: [submission-evidence.test.js](../tests/submission-evidence.test.js).
+
 ## Recording a professional silent demo (no voiceover, maximum three minutes)
 
 | Segment | Capture | Suggested subtitle |

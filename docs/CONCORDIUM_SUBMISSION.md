@@ -87,6 +87,10 @@ This is a **shooting plan, not a completed video**. Show only actions that actua
 4. Pilot with paid research/evidence APIs and rate-limited agent service integrations, then pursue Mainnet readiness, independent security testing, monitoring and explicit user spending caps.
 5. Keep the service fail-closed whenever identity, Sponsor authority, nonce integrity or settlement evidence is unavailable.
 
+## Reproducible judge checks
+
+Run `npm run submission:check` from the public repo to validate the production Agent Card's pinned SHA-256, agent identity, fixed 0.1 CCD Testnet quote, Gateway and Sponsor scope using **four public read-only requests**. This is a configuration preflight, **not** a verified payment or settlement. Do not run it on a timer or misrepresent it as a paid proof. See [REVIEWER_QUICKSTART.md](REVIEWER_QUICKSTART.md).
+
 ## Submission checklist
 
 - [x] Public repository with reproducible tests
