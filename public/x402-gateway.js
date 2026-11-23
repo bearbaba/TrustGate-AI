@@ -17,7 +17,7 @@ async function getStatus() {
     enabled=data.status==='CONFIGURED_NOT_PAYMENT_TESTED';
     $('gatewayStatus').className='status '+(enabled?'good':'');
     $('gatewayStatus').textContent=enabled?
-      'Configured, but no real payment has been confirmed. Quote requires a live facilitator handshake.':
+      'Configured. One prior exact Testnet payment is documented below; this panel checks current prerequisites, not historical settlement. A new quote still requires a live facilitator handshake.':
       'LOCKED — payment settlement is disabled until all prerequisites are configured.';
     $('merchantState').textContent=data.merchant||'Not configured';
     $('gatewayPrice').textContent=data.displayPrice||'0.1 Testnet CCD';
