@@ -107,7 +107,7 @@ npm run check
 
 ## API
 
-- `GET /api/x402/status` reports readiness without disclosing secrets; `GET /api/x402/quote` builds official x402 Testnet requirements when configured; `GET /api/x402/resource` protects a paid evidence endpoint and returns HTTP 402 or a settled resource only behind all configured safety gates. **No live payment has been confirmed**.
+- `GET /api/x402/status` reports readiness without disclosing secrets; `GET /api/x402/quote` builds official x402 Testnet requirements when configured; `GET /api/x402/resource` protects a paid evidence endpoint and returns HTTP 402 or a settled resource only behind all configured safety gates. **One live official sender-first x402 exact Testnet payment has been finalized and independently verified**, see [public evidence](docs/X402_PAYMENT_EVIDENCE.md). The readiness endpoint itself does not independently recheck each historical payment.
 - `GET /api/verify?badge=BASE58TOKEN` checks a badge with Concordium's server-side resolver. Verification fails closed if a mandatory check is absent or registry is unavailable.
 - `POST /api/live-proof` accepts signed, time-bounded Testnet requests for Agent #1323 and returns a public evidence receipt only after signature, badge and policy checks.
 - `POST /api/verify-receipt` checks v0.5 receipt SHA-256, **recomputed policy witness**, owner-signed request and the current badge. v0.4 legacy receipts can verify owner signature and current badge without policy witness. This is not a server-signed historical timestamp or authorization token.
