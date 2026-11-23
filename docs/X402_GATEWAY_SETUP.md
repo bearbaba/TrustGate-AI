@@ -1,8 +1,8 @@
 # TrustGate AI — Concordium Testnet x402 Gateway (v0.7)
 
-**Status (2026-11-22): Testnet Gateway and first-party Sponsor are configured, Sponsor signing key matches live on-chain credentials, and a valid x402 exact quote has been observed. Native wallet payment and x402 paid-resource settlement are NOT yet confirmed.**
+**Status (2026-11-23): Testnet Gateway and first-party Sponsor are configured. One real owner-authorized sender-first x402 exact payment finalized on Testnet and returned paid resource evidence; the separate native browser-wallet checkout remains unverified.** See [the first verified x402 payment](X402_PAYMENT_EVIDENCE.md) and [CCDExplorer](https://ccdexplorer.io/testnet/transaction/0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de).
 
-The gateway uses the official `@x402/core@2.31.0` and `@x402/concordium@2.31.0` packages for the Concordium `exact` scheme. Its Testnet configuration has been enabled after secure Sponsor key validation, but no actual payment has yet been independently confirmed. It must not be presented as real payment settlement before a transaction is verified.
+The gateway uses the official `@x402/core@2.31.0` and `@x402/concordium@2.31.0` packages for the Concordium `exact` scheme. The registered Owner has completed one real 0.1 Testnet CCD exact transfer, and Production returned `PAID_VERIFIED_AGENT_EVIDENCE` after independent finalization validation. The browser-wallet native sponsored route still encounters a signing compatibility error. Do not confuse read-only 402 quotes or current readiness GETs with new settlement events.
 
 ### Reuse an already connected Agent Owner before asking for a new popup
 
@@ -16,7 +16,7 @@ A real x402 exact payment requires the **sender's partially signed V1 transactio
 
 The available Concordium Wallet for Web API provides `sendSponsoredTransaction` (sponsor-first, wallet co-signs and broadcasts), but **does not currently provide a general sender-only transaction signing method** that returns the needed x402 exact payload. The browser native checkout is therefore not a substitute for the official x402 exact client.
 
-An official `@x402/concordium/exact/client` implementation now ships as `scripts/x402-exact-local.mjs`. It runs **only on the Owner's local computer**, with an explicitly approved payment. The public production server and Sponsor are configured; whether the first x402 exact payment succeeds remains to be demonstrated on-chain.
+An official `@x402/concordium/exact/client` implementation now ships as `scripts/x402-exact-local.mjs`. It runs **only on the Owner's local computer**, with an explicitly approved payment. The public Production exact gateway has now completed one real x402 exact payment; [full finalized-transaction evidence](X402_PAYMENT_EVIDENCE.md). No second payment is needed to demonstrate this milestone.
 
 First, **without any key**, run in your local checkout of this GitHub repository:
 
