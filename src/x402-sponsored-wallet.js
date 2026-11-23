@@ -44,6 +44,10 @@ function refreshRecoveryButtons(){
   inspectButton.disabled=inspectionInProgress ||
     normalizeNativeTransactionHash(hashField?.value)===null;
   forgetButton.disabled=!submittedHash && !uncertainSubmission;
+  // A wallet request without a returned hash is NOT a confirmed submission.
+  // Only the human can confirm whether Sign & Submit was ever approved.
+  forgetButton.textContent=uncertainSubmission && !submittedHash?
+    'I did not approve · reset warning':'Clear local record';
   downloadButton.disabled=!lastInspection ||
     normalizeNativeTransactionHash(hashField?.value)!==lastInspection.transaction;
 }
@@ -54,7 +58,7 @@ function refreshCheckoutButton(){
     !!getActiveWalletOperation();
   button.textContent=!checkoutReady?
     (readinessRetryable?'Checkout paused · Recheck Sponsor':'Checkout locked · Sponsor setup required'):
-    uncertainSubmission?'Check wallet history · submission status unknown':
+    uncertainSubmission?'Wallet response missing · resolve previous attempt':
     unresolved?'Verify previous transfer before another payment':
       'Review and sign 0.1 Testnet CCD in Wallet ↗';
 }
@@ -158,7 +162,7 @@ async function refreshWalletReadiness(){
     readinessRetryable=readiness.code==='ONCHAIN_LOOKUP_UNAVAILABLE';
     refreshCheckoutButton();
     report(uncertainSubmission && checkoutReady?
-      'A prior wallet transaction submission has no returned hash. Check your Concordium Testnet wallet history or CCDExplorer before making another payment. Do not assume the transfer failed.':
+      'Concordium Wallet returned no transaction hash. This does NOT prove a transfer was sent. If you did NOT approve Sign & Submit, use “I did not approve · reset warning”. Only if you approved or are unsure should you inspect wallet history first.':
       shouldHoldNativeCheckout(submittedHash,submittedVerified,uncertainSubmission) && checkoutReady?
       'A transaction was already submitted in this tab. Verify it before starting another payment; a repeated transfer may move more CCD.':
       readiness.message,checkoutReady && !shouldHoldNativeCheckout(submittedHash,submittedVerified,uncertainSubmission));
@@ -264,7 +268,7 @@ async function submitSponsoredWalletTransfer(){
     report('Wallet submitted the transaction. Check on-chain finalization before treating it as proof.',true);
   }catch(error){
     const unresolvedSubmission=walletSubmissionAttempted &&
-      ' If you approved a transfer, inspect your wallet activity or CCDExplorer before trying again; a missing hash is not evidence of a failed payment.';
+      ' If you never clicked Sign & Submit, no payment approval occurred; you can reset the local warning. If you did approve it or are unsure, inspect wallet history before trying again.';
     const diagnostic=classifyNativeWalletFailure(stage,error);
     // A safe, copyable diagnostic: no raw signature, signed intent, sponsor
     // transaction, account keys or stack. No request is retried automatically.
@@ -276,7 +280,9 @@ async function submitSponsoredWalletTransfer(){
       transactionHashReceived:false,
       paymentFinalized:false,
       x402ExactSettlementVerified:false,
-      reconcileBeforeRetry:walletSubmissionAttempted
+      walletRequestMade:walletSubmissionAttempted,
+      approvedSignatureObservedByDapp:false,
+      reconciliationNeededIfApprovedOrUnsure:walletSubmissionAttempted
     },null,2);
     report('Sponsored wallet checkout not completed ('+stage+
       ') ['+diagnostic.code+']: '+describeWalletPromptError(error)+
@@ -345,8 +351,13 @@ downloadButton?.addEventListener('click',()=>{
 });
 forgetButton?.addEventListener('click',()=>{
   if(!submittedHash && !uncertainSubmission)return;
-  // Explicit reconciliation is required before removing local double-payment protection.
-  if(!window.confirm('Have you checked the transaction history of your Owner account on Concordium Testnet and verified that it is safe to start another payment? This only clears LOCAL browser protection. It does NOT cancel, reverse or refund a transfer, and does not prove an unsuccessful submission.'))return;
+  // We cannot observe whether the extension's internal Sign & Submit was
+  // clicked: its API yields only a final hash or an error. Ask the human.
+  const neverApproved=uncertainSubmission && !submittedHash;
+  const question=neverApproved?
+    'Only choose OK if you did NOT approve Sign & Submit in Concordium Wallet. A wallet popup/error alone does not mean you paid. If you DID approve, or cannot remember, CANCEL and inspect your wallet history first. This button clears only the local warning and does not undo any transfer.':
+    'Only choose OK after you have checked the earlier transaction and confirmed it is safe to clear this browser warning. Clearing does NOT cancel or reverse a payment.';
+  if(!window.confirm(question))return;
   try{
     sessionStorage.removeItem(LAST_NATIVE_TX_KEY);
     sessionStorage.removeItem(LAST_NATIVE_UNCERTAIN_SUBMISSION_KEY);
@@ -358,7 +369,9 @@ forgetButton?.addEventListener('click',()=>{
   hashField.value='';
   refreshRecoveryButtons();
   refreshCheckoutButton();
-  report('Local warning cleared after your explicit confirmation. This does not prove a failed transfer or reverse any CCD.');
+  report(neverApproved?
+    'You confirmed no wallet payment approval occurred. The local false-alarm warning was reset. No transaction was created by resetting it.':
+    'Local warning cleared after explicit reconciliation. This does not reverse any CCD.');
 });
 restorePublicTransactionHash();
 
