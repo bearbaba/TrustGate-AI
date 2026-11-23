@@ -1,6 +1,7 @@
 import { detectConcordiumProvider } from '@concordium/browser-wallet-api-helpers';
 
 import { Transaction } from '@concordium/web-sdk/transactions';
+import {inspectSponsoredWalletWire} from '../lib/x402-wallet-transport.js';
 import { PROOF_CONTEXT } from '../lib/proof-message.js';
 import {connectOwnerWallet} from '../lib/x402-wallet-account.js';
 import {
@@ -198,6 +199,7 @@ async function submitSponsoredWalletTransfer(){
   signingInProgress=true;
   let stage='payment readiness';
   let walletSubmissionAttempted=false;
+  let walletWirePreflight=null;
   button.disabled=true;
   inspectButton.disabled=true;
   lastInspection=null;
@@ -237,6 +239,9 @@ async function submitSponsoredWalletTransfer(){
     });
     requireScope(response,account,config.merchant,state.sponsor);
     const tx=Transaction.signableFromJSON(response.sponsoredTransaction);
+    walletWirePreflight=inspectSponsoredWalletWire(tx);
+    if(!walletWirePreflight.ok)
+      throw Error('WALLET_INTEGER_WIRE_PREFLIGHT_FAILED');
     report('Review the Concordium Wallet popup: exactly 0.1 Testnet CCD to Merchant. Decline if the details differ.');
     // The wallet itself co-signs and SUBMITS. There is no silent server-side
     // transfer and signMessage() must never be used as the payment signature.
@@ -280,6 +285,7 @@ async function submitSponsoredWalletTransfer(){
       transactionHashReceived:false,
       paymentFinalized:false,
       x402ExactSettlementVerified:false,
+      walletWirePreflight,
       walletRequestMade:walletSubmissionAttempted,
       approvedSignatureObservedByDapp:false,
       reconciliationNeededIfApprovedOrUnsure:walletSubmissionAttempted
