@@ -5,6 +5,7 @@
 **Official deadline:** 9 December 2026, 23:59 UTC (10 December, 06:59 Vietnam time)  
 **Organizer:** Encode Club × Concordium  
 **Official information:** https://www.concordium.com/article/concordium-trusted-agents-hackathon-encode-club
+**Judge-facing evidence index / silent demo plan:** [REVIEWER_QUICKSTART.md](REVIEWER_QUICKSTART.md)
 
 ## Submission fields
 
@@ -85,6 +86,10 @@ This is a **shooting plan, not a completed video**. Show only actions that actua
 3. Improve owner-controlled payment signing UX without asking the user to upload a signing key; use an officially supported compatible signer before adding a browser payment workflow.
 4. Pilot with paid research/evidence APIs and rate-limited agent service integrations, then pursue Mainnet readiness, independent security testing, monitoring and explicit user spending caps.
 5. Keep the service fail-closed whenever identity, Sponsor authority, nonce integrity or settlement evidence is unavailable.
+
+## Reproducible judge checks
+
+Run `npm run submission:check` from the public repo to validate the production Agent Card's pinned SHA-256, agent identity, fixed 0.1 CCD Testnet quote, Gateway and Sponsor scope using **four public read-only requests**. This is a configuration preflight, **not** a verified payment or settlement. Do not run it on a timer or misrepresent it as a paid proof. See [REVIEWER_QUICKSTART.md](REVIEWER_QUICKSTART.md).
 
 ## Submission checklist
 

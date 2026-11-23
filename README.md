@@ -8,6 +8,8 @@
 - **x402 Testnet Gateway (configured, settlement unverified):** https://trustgate-ai.vercel.app/x402-gateway
 - Agent #1323 metadata management: https://trustgate-ai.vercel.app/sign-agent
 - Source: https://github.com/bearbaba/TrustGate-AI
+- **Reproducible public Testnet preflight (4 read-only GETs):** `npm run submission:check` (no wallet, no payment)
+- **Hackathon reviewer quickstart (proof vs. pending):** [Evidence & demo guide](docs/REVIEWER_QUICKSTART.md)
 - **On-chain proof:** [Successful Testnet setAgentURI transaction](https://ccdexplorer.io/testnet/transaction/93280aa5361967fc656e513e824c495c932c2abdc4cd7253bf3f2db35d90f4ee)
 - Testnet Agent: `ccd:4221332d34e1694168c2a0c0b3fd0f27/cis-2:JyP9UhV91L3jWGjHH4aB7`
 - Agent Card: https://trustgate-ai.vercel.app/.well-known/agent-card.json

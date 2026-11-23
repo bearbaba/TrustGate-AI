@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {
-  acquireWalletOperation,getActiveWalletOperation,describeWalletPromptError,
+  acquireWalletOperation,getActiveWalletOperation,describeWalletPromptError,classifyNativeWalletFailure,
   WALLET_OPERATION_EVENT
 } from '../lib/x402-wallet-ui-lock.js';
 
@@ -57,8 +57,21 @@ test('existing wallet popup errors explain manual resolution and never retry aut
   const rejected=describeWalletPromptError(new Error('Signing was rejected'));
   assert.match(rejected,/did not complete the transaction signature/i);
   assert.match(rejected,/no transaction hash/i);
-  assert.match(rejected,/before attempting another 0.1 CCD transfer/i);
+  assert.match(rejected,/no-approval reset/i);
+  assert.match(rejected,/check Owner Testnet history/i);
   assert.equal(describeWalletPromptError(new Error('RPC_DOWN')),'RPC_DOWN');
+});
+
+test('wallet failure diagnostics are scoped and contain no sensitive raw data',()=>{
+  const e=new Error('Value is not an integer: [private-signature-must-not-leak]');
+  const r=classifyNativeWalletFailure('wallet transaction approval/submission',e);
+  assert.equal(r.code,'WALLET_INTEGER_SERIALIZATION_ERROR');
+  assert.match(r.advice,/never approved Sign & Submit/);
+  assert.equal(JSON.stringify(r).includes('private-signature-must-not-leak'),false);
+  assert.equal(classifyNativeWalletFailure('sponsor transaction preparation',
+    new Error('SPONSOR_PREPARE_REPLAY')).code,'SPONSOR_PREPARATION_FAILED');
+  assert.equal(classifyNativeWalletFailure('wallet transaction approval/submission',
+    new Error('User rejected')).code,'WALLET_APPROVAL_REJECTED');
 });
 
 test('both separately bundled browser flows use shared DOM lock and release in finally',async()=>{
@@ -71,5 +84,8 @@ test('both separately bundled browser flows use shared DOM lock and release in f
   assert.match(payment,/release\(\);/);
   assert.match(payment,/getActiveWalletOperation\(\)/);
   assert.match(payment,/walletSubmissionAttempted=true/);
-  assert.match(payment,/a missing hash is not evidence of a failed payment/);
+  assert.match(payment,/transactionHashReceived:false/);
+  assert.match(payment,/never clicked Sign & Submit/);
+  assert.match(payment,/I did not approve · reset warning/);
+  assert.match(payment,/window\.confirm\(question\)/);
 });
