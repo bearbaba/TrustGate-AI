@@ -6,11 +6,18 @@ const root=new URL('../public/',import.meta.url);
 const html=await readFile(new URL('index.html',root),'utf8');
 const client=await readFile(new URL('app.js',root),'utf8');
 
-test('homepage accurately describes live wallet signatures while avoiding claims of paid settlement',()=>{
+test('homepage accurately distinguishes the one finalized exact Testnet payment from wallet-based read-only proof',()=>{
   assert.match(html,/Wallet-signed/);
   assert.match(html,/Read-only owner proof/);
   assert.match(html,/Concordium CIS-8004/);
-  assert.match(html,/SETTLEMENT NOT VERIFIED/);
+  assert.match(html,/X402 EXACT PAYMENT VERIFIED/);
+  assert.match(html,/0\.1 CCD/);
+  assert.match(html,/PAID_VERIFIED_AGENT_EVIDENCE/);
+  assert.match(html,/0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de/);
+  assert.match(html,/ccdexplorer\.io\/testnet\/transaction\//);
+  assert.match(html,/native browser-wallet checkout.*unverified/);
+  assert.doesNotMatch(html,/SETTLEMENT NOT VERIFIED/);
+  assert.doesNotMatch(html,/No x402 settlement has been demonstrated/);
   assert.match(html,/ALLOW means policy approval only/);
   assert.doesNotMatch(html,/No wallets or payments/);
   assert.doesNotMatch(html,/TrustGate AI v0\.7/);
@@ -35,6 +42,11 @@ test('main page derives the safety status from the real read-only gateway endpoi
   assert.match(client,/fetch\('\/api\/x402\/status',\{cache:'no-store'\}\)/);
   assert.match(client,/LOCKED_UNTIL_CONFIGURED/);
   assert.match(client,/CONFIGURED_NOT_PAYMENT_TESTED/);
-  assert.match(client,/STATUS UNKNOWN/);
+  assert.match(client,/1 VERIFIED TESTNET PAYMENT/);
+  assert.match(client,/new payments currently unavailable/);
+  assert.match(client,/Gateway configured for new requests/);
+  assert.match(client,/readiness unavailable/);
+  assert.doesNotMatch(client,/No successful settlement proof yet/);
+  assert.doesNotMatch(client,/x402 TESTNET · UNVERIFIED/);
   assert.doesNotMatch(client,/PAYMENT-SIGNATURE/);
 });
