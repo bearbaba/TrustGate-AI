@@ -1,6 +1,6 @@
 # TrustGate AI — Concordium Trusted Agents Hackathon 2026 Submission Pack
 
-**Prepared on:** 22 November 2026  
+**Updated on:** 23 November 2026  
 **Submission status:** DRAFT READY FOR OWNER REVIEW — **NOT SUBMITTED**  
 **Official deadline:** 9 December 2026, 23:59 UTC (10 December, 06:59 Vietnam time)  
 **Organizer:** Encode Club × Concordium  
@@ -21,9 +21,9 @@ TrustGate AI is an identity-first security boundary for AI-agent commerce. Befor
 
 The working agent is registered on Concordium Testnet as Agent #1323, with an Active badge, an Agent Card URI and SHA-256 anchored in registry contract <12802,0>. Its on-chain `setAgentURI` update finalized successfully. A live Owner-signed evidence request has passed all six independent verification checks, and the adversarial Attack Lab accepted an original receipt while rejecting forged policy decisions, swapped wallet signatures and substituted metadata hashes.
 
-The x402 integration uses the official `@x402/core` and `@x402/concordium` exact packages. Production has a separate Merchant, an on-chain verified fee Sponsor and a durable Redis replay guard. A real HTTP 402 challenge with a 0.1 Testnet CCD quote and Sponsor metadata has been successfully generated after a wallet-signed access intent. A dedicated owner-local client now supports constructing the official sender-signed, Sponsor-pending V1 payment payload; on a valid paid request, the facilitator verifies the sender signature, adds its own signature, submits for finalization and independently checks the on-chain transfer before any paid resource is released.
+The x402 integration uses the official `@x402/core` and `@x402/concordium` exact packages. Production has a separate Merchant, an on-chain verified fee Sponsor and a durable Redis replay guard. A real HTTP 402 challenge with a 0.1 Testnet CCD quote and Sponsor metadata has been successfully generated after a wallet-signed access intent. A dedicated Owner-local client supports official sender-signed sponsored V1 exact payments. **One live paid request has now succeeded**: the facilitator settled 0.1 Testnet CCD, the resource backend independently checked finalization and exact transaction scope, and returned the `PAID_VERIFIED_AGENT_EVIDENCE` response.
 
-**Verification boundary:** No finalized x402 payment or paid-resource delivery has yet been independently demonstrated. The browser wallet's separate native sponsored-checkout review reached the correct 0.1 CCD / zero-fee approval screen but encountered a signing issue; that transaction is not claimed as settled. TrustGate never treats policy ALLOW or an HTTP 402 quote as evidence of money transferred. Testnet is used deliberately to preserve safety and low cost.
+**Payment verification update (23 November 2026):** The registered Owner completed **one real official sender-first x402 exact** payment (0.1 Testnet CCD), and Production granted `PAID_VERIFIED_AGENT_EVIDENCE` with `verified:true` and `grantsPaidResource:true`. The backend checks finalized Testnet payment sender, recipient, amount and Sponsor before granting access. [Public payment transaction](https://ccdexplorer.io/testnet/transaction/0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de) · [Evidence / no-key verifier](X402_PAYMENT_EVIDENCE.md). The **separate** native browser-wallet checkout still has a signing error and is not claimed working. No Mainnet payment or unrestricted agent spending is claimed.
 
 ### Problem and differentiation
 
@@ -38,16 +38,20 @@ Agents need permission to work, but they must not treat an arbitrary prompt, a f
 | Adversarial verifier | https://trustgate-ai.vercel.app/security-lab |
 | x402 exact Testnet gateway | https://trustgate-ai.vercel.app/x402-gateway |
 | Open-source repository | https://github.com/bearbaba/TrustGate-AI |
+| **CCDExplorer — real x402 exact Testnet payment** | https://ccdexplorer.io/testnet/transaction/0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de |
+| **Paid-response evidence and independent verifier** | https://github.com/bearbaba/TrustGate-AI/blob/main/docs/X402_PAYMENT_EVIDENCE.md |
 | CCDExplorer — successful Agent Card update | https://ccdexplorer.io/testnet/transaction/93280aa5361967fc656e513e824c495c932c2abdc4cd7253bf3f2db35d90f4ee |
 | Concordium Agent Card | https://trustgate-ai.vercel.app/.well-known/agent-card.json |
 | Independent on-chain verification | https://github.com/bearbaba/TrustGate-AI/blob/main/docs/ONCHAIN_EVIDENCE.md |
 | Owner-signature and policy evidence | https://github.com/bearbaba/TrustGate-AI/blob/main/docs/LIVE_PROOF_EVIDENCE.md |
 
-**Payment transaction hash:** NOT AVAILABLE / NOT VERIFIED. Do not substitute the Agent Card update hash as an x402 payment hash.
+**Real exact x402 payment transaction hash:** `0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de` ([CCDExplorer](https://ccdexplorer.io/testnet/transaction/0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de)). It is distinct from the earlier Agent Card metadata-update transaction.
 
 **Demo video URL:** REQUIRED — not recorded or uploaded yet. Do not invent a video link.
 
 ## What demonstrably works
+
+**NEW — first real x402 exact settled transfer:** [Transaction 0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de](https://ccdexplorer.io/testnet/transaction/0ac313bf373f1ba409ee2ba1519be5304bf108d540d4cee6adaf3678037367de), [paid-response evidence](X402_PAYMENT_EVIDENCE.md), and the no-secret recheck command `npm run x402:verify-finalized`.
 
 - Concordium Testnet CIS-8004 Agent #1323 Active, anchored Agent Card and a successful metadata update transaction
 - Owner-signed Live Proof, six independent Policy Witness checks, and four observed Attack Lab cases
@@ -57,7 +61,7 @@ Agents need permission to work, but they must not treat an arbitrary prompt, a f
 
 ## What is not yet demonstrated
 
-- A successful, independently verified `FINALIZED` x402 exact payment followed by `PAID_VERIFIED_AGENT_EVIDENCE`
+- A successful native browser-wallet sponsored transfer (not needed for the demonstrated official x402 exact paid session)
 - x402 exact sender-only signing through Concordium Wallet for Web, whose exposed API signs-and-submits native sponsored transfers rather than returning a sender-only transaction signature
 - Resolution of the native browser-wallet `Value is not an integer` approval error in the user's installation
 - Mainnet settlement, public server-signed historical receipt issuance, or fully delegated autonomous fund access
@@ -74,14 +78,14 @@ This is a **shooting plan, not a completed video**. Show only actions that actua
 | 00:43–01:12 | Live Proof: Owner signs non-payment request | Human-owned signature, narrow access scope. |
 | 01:12–01:34 | Verify Receipt result / six green checks | Independent identity and policy verification. |
 | 01:34–01:56 | Attack Lab: forged policy/signature/card rejected | Tampering fails at the correct layer. |
-| 01:56–02:13 | x402 Testnet gateway, 402 challenge and exact fee quote | Real 402 challenge; settlement not yet claimed. |
+| 01:56–02:13 | Actual exact x402 paid response and public CCDExplorer transaction | 0.1 Testnet CCD settled; resource released after finalization. |
 | 02:13–02:25 | Architecture and public links | Proof before permission. Settlement before access. |
 
-**If and only if a real finalized x402 Testnet payment is verified**, replace the final sequence with the actual payment hash, independent settlement response and paid-resource delivery. Never use an unfinalized or unrelated hash. Do not include wallets' secret screens in the recording.
+Use the already completed payment hash and documented successful paid-resource response; do NOT send a second CCD payment for the video. Never show the secret-input prompt, signing key or export in the recording.
 
 ## Mainnet and user-adoption plan
 
-1. Finish one genuine Testnet sender-first x402 exact payment and public transaction reconciliation without double spending; harden cross-session replay/idempotency and recovery.
+1. **Achieved:** one real sender-first exact x402 Testnet payment, independently gated by finalization and paid-resource delivery. **Next:** harden cross-session replay/idempotency and recovery before a commercial rollout.
 2. Add secure server-issued receipt attestations and durable audit records, apply threat modeling and smart-contract / API security review.
 3. Improve owner-controlled payment signing UX without asking the user to upload a signing key; use an officially supported compatible signer before adding a browser payment workflow.
 4. Pilot with paid research/evidence APIs and rate-limited agent service integrations, then pursue Mainnet readiness, independent security testing, monitoring and explicit user spending caps.
@@ -99,7 +103,7 @@ Run `npm run submission:check` from the public repo to validate the production A
 - [x] Identity / owner-signature / Policy Witness proof
 - [x] Official x402 challenge, Sponsor and merchant ready on Testnet
 - [x] Owner-local sender-first x402 exact client source and offline tests
-- [ ] **One real finalized x402 payment and paid resource proof** (important for payment integration quality)
+- [x] **One real finalized exact x402 Testnet payment and paid-resource response** — verified public hash and evidence document
 - [ ] **Record and upload a demo video of up to three minutes**
 - [ ] Review this submission text and ensure all claims match current public proof
 - [ ] **Log in to Encode Club and actually submit before deadline**
